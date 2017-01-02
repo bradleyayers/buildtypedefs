@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc",
     "test": "mocha",
-    "test:watch": "mocha --watch"
+    "test:watch": "mocha --recursive --watch test/"
   },
   "dependencies": {
     "@types/node": "^6.0.53",
