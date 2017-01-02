@@ -15,11 +15,21 @@ describe('parser', () => {
   });
 
   check('?a', 'an optional entity', {
-    kind: 'Optional',
+    kind: 'Nullable',
     type: {
       kind: 'Entity',
       name: 'a'
     }
+  });
+
+  check('""', 'an empty string literal', {
+    kind: 'StringLiteral',
+    value: ''
+  });
+
+  check('"a"', 'an empty string literal', {
+    kind: 'StringLiteral',
+    value: 'a'
   });
 
   check('union<a>', 'a union with a single entity', {
@@ -47,7 +57,7 @@ describe('parser', () => {
   });
 
   check('?union<a>', 'an optional union', {
-    kind: 'Optional',
+    kind: 'Nullable',
     type: {
       kind: 'Union',
       types: [
@@ -60,20 +70,20 @@ describe('parser', () => {
   });
 
   check('()', 'a call signature with no parameters and no return value', {
-    kind: 'CallSignature',
+    kind: 'Function',
     parameters: [],
   });
 
   check('?()', 'an optional call signature', {
-    kind: 'Optional',
+    kind: 'Nullable',
     type: {
-      kind: 'CallSignature',
+      kind: 'Function',
       parameters: []
     }
   });
 
   check('() → a', 'a call signature with a return value but no parameters', {
-    kind: 'CallSignature',
+    kind: 'Function',
     parameters: [],
     returnType: {
       kind: 'Entity',
@@ -82,9 +92,9 @@ describe('parser', () => {
   });
 
   check('?() → a', 'an optional call signature with a return value', {
-    kind: 'Optional',
+    kind: 'Nullable',
     type: {
-      kind: 'CallSignature',
+      kind: 'Function',
       parameters: [],
       returnType: {
         kind: 'Entity',
@@ -94,7 +104,7 @@ describe('parser', () => {
   });
 
   check('(a) → b', 'a call signature with one parameter and a return value', {
-    kind: 'CallSignature',
+    kind: 'Function',
     parameters: [
       {
         kind: 'Entity',
@@ -108,10 +118,10 @@ describe('parser', () => {
   });
 
   check('(?a) → b', 'a call signature with an optional parameter and a return value', {
-    kind: 'CallSignature',
+    kind: 'Function',
     parameters: [
       {
-        kind: 'Optional',
+        kind: 'Nullable',
         type: {
           kind: 'Entity',
           name: 'a'
@@ -125,14 +135,14 @@ describe('parser', () => {
   });
 
   check('(a, ?b) → c', 'a call signature with multiple parameters', {
-    kind: 'CallSignature',
+    kind: 'Function',
     parameters: [
       {
         kind: 'Entity',
         name: 'a'
       },
       {
-        kind: 'Optional',
+        kind: 'Nullable',
         type: {
           kind: 'Entity',
           name: 'b'
@@ -154,15 +164,15 @@ describe('parser', () => {
   });
 
   check('{}', 'an empty type literal', {
-    kind: 'TypeLiteral',
+    kind: 'Object',
     members: []
   });
 
   check('{node: dom.Node, offset: number}', 'an type literal', {
-    kind: 'TypeLiteral',
+    kind: 'Object',
     members: [
       {
-        kind: 'PropertySignature',
+        kind: 'ObjectMember',
         name: 'node',
         type: {
           kind: 'Entity',
@@ -170,7 +180,7 @@ describe('parser', () => {
         }
       },
       {
-        kind: 'PropertySignature',
+        kind: 'ObjectMember',
         name: 'offset',
         type: {
           kind: 'Entity',

@@ -3,123 +3,111 @@ import 'mocha';
 import { createScanner, SyntaxKind } from '../../src/getdocs/scanner';
 
 describe('scanner', () => {
-  it('scans (', () => {
-    expect(scan('(')).to.deep.equal([
-      SyntaxKind.OpenParenToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('(', [
+    SyntaxKind.OpenParenToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans )', () => {
-    expect(scan(')')).to.deep.equal([
-      SyntaxKind.CloseParenToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check(')', [
+    SyntaxKind.CloseParenToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans →', () => {
-    expect(scan('→')).to.deep.equal([
-      SyntaxKind.RightArrow,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('→', [
+    SyntaxKind.RightArrow,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans [', () => {
-    expect(scan('[')).to.deep.equal([
-      SyntaxKind.OpenBracketToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('->', [
+    SyntaxKind.RightArrow,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans ]', () => {
-    expect(scan(']')).to.deep.equal([
-      SyntaxKind.CloseBracketToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('[', [
+    SyntaxKind.OpenBracketToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans {', () => {
-    expect(scan('{')).to.deep.equal([
-      SyntaxKind.OpenBraceToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check(']', [
+    SyntaxKind.CloseBracketToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans }', () => {
-    expect(scan('}')).to.deep.equal([
-      SyntaxKind.CloseBraceToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('{', [
+    SyntaxKind.OpenBraceToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans <', () => {
-    expect(scan('<')).to.deep.equal([
-      SyntaxKind.LessThanToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('}', [
+    SyntaxKind.CloseBraceToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans >', () => {
-    expect(scan('>')).to.deep.equal([
-      SyntaxKind.GreaterThanToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('<', [
+    SyntaxKind.LessThanToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans ?', () => {
-    expect(scan('?')).to.deep.equal([
-      SyntaxKind.QuestionToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('>', [
+    SyntaxKind.GreaterThanToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans ,', () => {
-    expect(scan(',')).to.deep.equal([
-      SyntaxKind.CommaToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('?', [
+    SyntaxKind.QuestionToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans :', () => {
-    expect(scan(':')).to.deep.equal([
-      SyntaxKind.ColonToken,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check(',', [
+    SyntaxKind.CommaToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans identifier "a"', () => {
-    expect(scan('a')).to.deep.equal([
-      { kind: SyntaxKind.Identifier, value: 'a' },
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check(':', [
+    SyntaxKind.ColonToken,
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans identifier "aa"', () => {
-    expect(scan('aa')).to.deep.equal([
-      { kind: SyntaxKind.Identifier, value: 'aa' },
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('a', [
+    { kind: SyntaxKind.Identifier, value: 'a' },
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans qualified name "a.b"', () => {
-    expect(scan('a.b')).to.deep.equal([
-      { kind: SyntaxKind.Identifier, value: 'a' },
-      SyntaxKind.DotToken,
-      { kind: SyntaxKind.Identifier, value: 'b' },
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('aa', [
+    { kind: SyntaxKind.Identifier, value: 'aa' },
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('scans keyword "union"', () => {
-    expect(scan('union')).to.deep.equal([
-      SyntaxKind.UnionKeyword,
-      SyntaxKind.EndOfFileToken
-    ]);
-  });
+  check('a.b', [
+    { kind: SyntaxKind.Identifier, value: 'a' },
+    SyntaxKind.DotToken,
+    { kind: SyntaxKind.Identifier, value: 'b' },
+    SyntaxKind.EndOfFileToken
+  ]);
 
-  it('skips whitespace', () => {
-    expect(scan(' ')).to.deep.equal([SyntaxKind.EndOfFileToken]);
-  });
+  check('""', [
+    { kind: SyntaxKind.StringLiteral, value: '' },
+    SyntaxKind.EndOfFileToken
+  ]);
+
+  check('"a"', [
+    { kind: SyntaxKind.StringLiteral, value: 'a' },
+    SyntaxKind.EndOfFileToken
+  ]);
+
+  check('"\\a"', [
+    { kind: SyntaxKind.StringLiteral, value: 'a' },
+    SyntaxKind.EndOfFileToken
+  ]);
+
+  check('union', [
+    SyntaxKind.UnionKeyword,
+    SyntaxKind.EndOfFileToken
+  ]);
+
+  check(' ', [
+    SyntaxKind.EndOfFileToken
+  ]);
 
   it('scans "(Fragment, ?number, ?number) → ?union<ContentMatch, bool>"', () => {
     expect(scan('(Fragment, ?number, ?number) → ?union<ContentMatch, bool>')).to.deep.equal([
@@ -150,20 +138,34 @@ describe('scanner', () => {
   }
 
   /**
-   * Scan text into a sequence of tokens.
+   * Scan text into a sequence of tokens suitable for deep equals assertion.
    */
   function scan(text: string): (SyntaxKind | Token)[] {
     const tokens = [];
     const scanner = createScanner(text);
     while (true) {
       const token = scanner.scan();
-      tokens.push(token === SyntaxKind.Identifier
-        ? { kind: token, value: scanner.getTokenValue() }
-        : token);
+      switch (token) {
+        case SyntaxKind.Identifier:
+        case SyntaxKind.StringLiteral:
+          tokens.push({ kind: token, value: scanner.getTokenValue() });
+          break;
+        default:
+          tokens.push(token);
+      }
       if (token === SyntaxKind.EndOfFileToken) {
         break;
       }
     }
     return tokens;
+  }
+
+  /**
+   * Assert text is scanned into a sequence of tokens.
+   */
+  function check(text: string, tokens: any) {
+    it(`scans \`${text}\``, () => {
+      expect(scan(text)).to.deep.equal(tokens);
+    });
   }
 });

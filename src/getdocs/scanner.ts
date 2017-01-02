@@ -73,7 +73,17 @@ export function createScanner(text: string) {
         case CharacterCodes.colon:
           pos++;
           return token = SyntaxKind.ColonToken;
+        case CharacterCodes.doubleQuote:
+          tokenValue = scanString();
+          return token = SyntaxKind.StringLiteral;
         default:
+          // Treat '->' as equivalent to →
+          if (ch === CharacterCodes.minus && text.charCodeAt(pos + 1) === CharacterCodes.greaterThan) {
+            pos += 2;
+            return token = SyntaxKind.RightArrow;
+          }
+
+          // Identifier
           if (isIdentifierStart(ch)) {
             pos++;
             while (pos < end && isIdentifierPart(ch = text.charCodeAt(pos))) pos++;
@@ -88,7 +98,80 @@ export function createScanner(text: string) {
           throw new Error(`Invalid character at position ${pos}.`);
       }
     }
+  }
 
+  function scanString(): string {
+    const quote = text.charCodeAt(pos);
+    pos++;
+    let result = "";
+    let start = pos;
+    while (true) {
+      if (pos >= end) {
+        throw new Error(Errors.Unterminated_string_literal);
+      }
+      const ch = text.charCodeAt(pos);
+      if (ch === quote) {
+        result += text.substring(start, pos);
+        pos++;
+        break;
+      }
+      if (ch === CharacterCodes.backslash) {
+        result += text.substring(start, pos);
+        result += scanEscapeSequence();
+        start = pos;
+        continue;
+      }
+      pos++;
+    }
+    return result;
+  }
+
+  function scanEscapeSequence(): string {
+    pos++;
+    if (pos >= end) {
+      throw new Error(Errors.Unexpected_end_of_text);
+    }
+    const ch = text.charCodeAt(pos);
+    pos++;
+    switch (ch) {
+      case CharacterCodes._0:
+        return "\0";
+      case CharacterCodes.b:
+        return "\b";
+      case CharacterCodes.t:
+        return "\t";
+      case CharacterCodes.n:
+        return "\n";
+      case CharacterCodes.v:
+        return "\v";
+      case CharacterCodes.f:
+        return "\f";
+      case CharacterCodes.r:
+        return "\r";
+      case CharacterCodes.singleQuote:
+        return "\'";
+      case CharacterCodes.doubleQuote:
+        return "\"";
+      case CharacterCodes.u:
+        // '\u{DDDDDDDD}'
+        throw new Error(Errors.Unsupported_unicode_escape);
+      case CharacterCodes.x:
+        // '\xDD'
+        throw new Error(Errors.Unsupported_hex_escape);
+      // when encountering a LineContinuation (i.e. a backslash and a line terminator sequence),
+      // the line terminator is interpreted to be "the empty code unit sequence".
+      case CharacterCodes.carriageReturn:
+        if (pos < end && text.charCodeAt(pos) === CharacterCodes.lineFeed) {
+          pos++;
+        }
+      // fall through
+      case CharacterCodes.lineFeed:
+      case CharacterCodes.lineSeparator:
+      case CharacterCodes.paragraphSeparator:
+        return "";
+      default:
+        return String.fromCharCode(ch);
+    }
   }
 }
 
@@ -105,6 +188,9 @@ export function isIdentifierPart(ch: number): boolean {
 export enum SyntaxKind {
   EndOfFileToken,
   Unknown,
+  // Literals
+  NumericLiteral,
+  StringLiteral,
   // Type
   TypePredicate,
   TypeReference,
@@ -276,3 +362,10 @@ export const enum CharacterCodes {
 
   rightArrow = 0x2192,          // →
 }
+
+const Errors = {
+  Unexpected_end_of_text: 'Unexpected end of text.',
+  Unterminated_string_literal: 'Unterminated string literal.',
+  Unsupported_unicode_escape: 'Unicode escape codes are unsupported.',
+  Unsupported_hex_escape: 'Hex escape codes are unsupported.'
+};

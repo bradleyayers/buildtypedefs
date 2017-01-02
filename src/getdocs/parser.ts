@@ -16,34 +16,45 @@ export function parse(text: string) {
       case SyntaxKind.OpenBracketToken:
         return parseArray();
       case SyntaxKind.OpenParenToken:
-        return parseCallSignature();
+        return parseFunction();
       case SyntaxKind.QuestionToken:
-        return parseOptional();
+        return parseNullable();
       case SyntaxKind.Identifier:
         return parseEntity();
       case SyntaxKind.UnionKeyword:
         return parseUnion();
       case SyntaxKind.OpenBraceToken:
-        return parseTypeLiteral();
+        return parseObject();
+      case SyntaxKind.StringLiteral:
+        return parseStringLiteral();
       default:
         throw new Error(`Unable to parse token ${token}`);
     }
   }
 
-  function parseTypeLiteral(): TypeLiteralTypeNode {
+  function parseStringLiteral(): StringLiteralTypeNode {
+    const value = scanner.getTokenValue();
+    nextToken();
+    return {
+      kind: 'StringLiteral',
+      value
+    };
+  }
+
+  function parseObject(): ObjectTypeNode {
     invariant(token === SyntaxKind.OpenBraceToken);
     return {
-      kind: 'TypeLiteral',
+      kind: 'Object',
       members: parseBracketedList(ParsingContext.LiteralTypeMembers, parseTypeLiteralMember, SyntaxKind.OpenBraceToken, SyntaxKind.CloseBraceToken);
     };
   }
 
-  function parseTypeLiteralMember(): PropertySignatureTypeNode {
+  function parseTypeLiteralMember(): ObjectMemberTypeNode {
     const name = parseIdentifier();
     skipExpected(SyntaxKind.ColonToken);
     const type = parseType();
     return {
-      kind: 'PropertySignature',
+      kind: 'ObjectMember',
       name,
       type
     };
@@ -59,10 +70,10 @@ export function parse(text: string) {
     };
   }
 
-  function parseOptional(): OptionalTypeNode {
+  function parseNullable(): NullableTypeNode {
     nextToken();
     return {
-      kind: 'Optional',
+      kind: 'Nullable',
       type: parseType()
     };
   }
@@ -95,10 +106,10 @@ export function parse(text: string) {
     };
   }
 
-  function parseCallSignature(): CallSignatureTypeNode {
+  function parseFunction(): FunctionTypeNode {
     const parameters = parseBracketedList(ParsingContext.Parameters, parseType, SyntaxKind.OpenParenToken, SyntaxKind.CloseParenToken);
-    const func: CallSignatureTypeNode = {
-      kind: 'CallSignature',
+    const func: FunctionTypeNode = {
+      kind: 'Function',
       parameters,
     };
     if (skipOptional(SyntaxKind.RightArrow)) {
@@ -154,8 +165,8 @@ export function parse(text: string) {
   }
 }
 
-export interface OptionalTypeNode {
-  kind: 'Optional';
+export interface NullableTypeNode {
+  kind: 'Nullable';
   type: TypeNode;
 }
 
@@ -169,8 +180,8 @@ export interface UnionTypeNode {
   types: TypeNode[];
 }
 
-export interface CallSignatureTypeNode {
-  kind: 'CallSignature';
+export interface FunctionTypeNode {
+  kind: 'Function';
   parameters: TypeNode[];
   returnType?: TypeNode;
 }
@@ -180,24 +191,30 @@ export interface ArrayTypeNode {
   type: TypeNode;
 }
 
-export interface TypeLiteralTypeNode {
-  kind: 'TypeLiteral';
-  members: PropertySignatureTypeNode[];
+export interface ObjectTypeNode {
+  kind: 'Object';
+  members: ObjectMemberTypeNode[];
 }
 
-export interface PropertySignatureTypeNode {
-  kind: 'PropertySignature';
+export interface ObjectMemberTypeNode {
+  kind: 'ObjectMember';
   name: string;
   type: TypeNode;
 }
 
-export type TypeNode = OptionalTypeNode
+export interface StringLiteralTypeNode {
+  kind: 'StringLiteral';
+  value: string;
+}
+
+export type TypeNode = NullableTypeNode
   | EntityTypeNode
   | UnionTypeNode
-  | CallSignatureTypeNode
+  | FunctionTypeNode
   | ArrayTypeNode
-  | TypeLiteralTypeNode
-  | PropertySignatureTypeNode;
+  | ObjectTypeNode
+  | ObjectMemberTypeNode
+  | StringLiteralTypeNode;
 
 enum ParsingContext {
   Parameters,
