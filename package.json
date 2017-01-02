@@ -1,0 +1,26 @@
+{
+  "name": "prosemirror-typescript",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "bin": {
+    "prosemirror-typescript": "bin/prosemirror-typescript.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "mocha",
+    "test:watch": "mocha --watch"
+  },
+  "dependencies": {
+    "@types/node": "^6.0.53",
+    "jscodeshift": "^0.3.30",
+    "ts-node": "^1.7.2",
+    "typescript": "^2.1.4"
+  },
+  "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.34",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0"
+  }
+}
