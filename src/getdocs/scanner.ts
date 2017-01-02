@@ -3,28 +3,36 @@ export function createScanner(text: string) {
   let pos = 0;
 
   // end of text
-  let end = text.length;
-
-  // Start position of whitespace before current token
-  let startPos = pos;
-
-  // Start position of text of current token
-  let tokenPos = pos;
+  const end = text.length;
 
   let token = SyntaxKind.Unknown;
   let tokenValue: string | undefined;
 
-  return {,
+  return {
     getToken: () => token,
     getTokenValue: () => tokenValue,
+    lookAhead,
     scan
   };
 
-  function scan(): SyntaxKind {
-    startPos = pos;
+  function lookAhead<T>(callback: () => T): T {
+    const savedPos = pos;
+    const savedToken = token;
+    const savedTokenValue = tokenValue;
 
+    const result = callback();
+
+    pos = savedPos;
+    token = savedToken;
+    tokenValue = savedTokenValue;
+
+    return result;
+  }
+
+  function scan(): SyntaxKind {
     while (true) {
-      tokenPos = pos;
+      // Start position of text of current token
+      const tokenPos = pos;
       if (pos >= end) {
         return token = SyntaxKind.EndOfFileToken;
       }
@@ -71,6 +79,9 @@ export function createScanner(text: string) {
           pos++;
           return token = SyntaxKind.CommaToken;
         case CharacterCodes.dot:
+          if (text.charCodeAt(pos + 1) === CharacterCodes.dot && text.charCodeAt(pos + 2) === CharacterCodes.dot) {
+            return pos += 3, token = SyntaxKind.DotDotDotToken;
+          }
           pos++;
           return token = SyntaxKind.DotToken;
         case CharacterCodes.colon:
@@ -247,6 +258,7 @@ export enum SyntaxKind {
   OpenBracketToken,
   CloseBracketToken,
   DotToken,
+  DotDotDotToken,
   CommaToken,
   RightArrowToken,
   QuestionToken,

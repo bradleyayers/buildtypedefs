@@ -128,7 +128,7 @@ export function parse(text: string) {
   }
 
   function parseFunction(): FunctionTypeNode {
-    const parameters = parseBracketedList(ParsingContext.Parameters, parseType, SyntaxKind.OpenParenToken, SyntaxKind.CloseParenToken);
+    const parameters = parseBracketedList(ParsingContext.Parameters, parseFunctionParameter, SyntaxKind.OpenParenToken, SyntaxKind.CloseParenToken);
     const func: FunctionTypeNode = {
       kind: 'Function',
       parameters,
@@ -137,6 +137,32 @@ export function parse(text: string) {
       func.returnType = parseType();
     }
     return func;
+  }
+
+  function parseFunctionParameter(): FunctionParameterTypeNode {
+    let name;
+    let rest;
+    if (token === SyntaxKind.DotDotDotToken) {
+      rest = true;
+      nextToken();
+      name = parseIdentifier();
+      skipExpected(SyntaxKind.ColonToken);
+    } else if (scanner.lookAhead(isNamedFunctionParameterStart)) {
+      name = parseIdentifier();
+      skipExpected(SyntaxKind.ColonToken);
+    }
+    const type = parseType();
+    const functionParameter: FunctionParameterTypeNode = {
+      kind: 'FunctionParameter',
+      type,
+    };
+    if (rest) {
+      functionParameter.rest = rest;
+    }
+    if (name) {
+      functionParameter.name = name;
+    }
+    return functionParameter;
   }
 
   function parseBracketedList<T>(context: ParsingContext, parseElement: () => T, open: SyntaxKind, close: SyntaxKind): T[] {
@@ -184,6 +210,11 @@ export function parse(text: string) {
     }
     return false;
   }
+
+  function isNamedFunctionParameterStart(): boolean {
+    return token === SyntaxKind.Identifier
+      && scanner.scan() === SyntaxKind.ColonToken;
+  }
 }
 
 export interface NullableTypeNode {
@@ -203,8 +234,15 @@ export interface UnionTypeNode {
 
 export interface FunctionTypeNode {
   kind: 'Function';
-  parameters: TypeNode[];
+  parameters: FunctionParameterTypeNode[];
   returnType?: TypeNode;
+}
+
+export interface FunctionParameterTypeNode {
+  kind: 'FunctionParameter';
+  name?: string;
+  rest?: boolean;
+  type: TypeNode;
 }
 
 export interface ArrayTypeNode {

@@ -68,6 +68,11 @@ describe('scanner', () => {
     SyntaxKind.EndOfFileToken
   ]);
 
+  check('...', [
+    SyntaxKind.DotDotDotToken,
+    SyntaxKind.EndOfFileToken
+  ]);
+
   check('*', [
     SyntaxKind.AsteriskToken,
     SyntaxKind.EndOfFileToken

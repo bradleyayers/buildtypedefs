@@ -82,12 +82,12 @@ describe('parser', () => {
     }
   });
 
-  check('()', 'a call signature with no parameters and no return value', {
+  check('()', 'a function with no parameters and no return value', {
     kind: 'Function',
     parameters: [],
   });
 
-  check('?()', 'an optional call signature', {
+  check('?()', 'an optional function', {
     kind: 'Nullable',
     type: {
       kind: 'Function',
@@ -95,7 +95,7 @@ describe('parser', () => {
     }
   });
 
-  check('() → a', 'a call signature with a return value but no parameters', {
+  check('() → a', 'a function with a return value but no parameters', {
     kind: 'Function',
     parameters: [],
     returnType: {
@@ -104,7 +104,7 @@ describe('parser', () => {
     }
   });
 
-  check('?() → a', 'an optional call signature with a return value', {
+  check('?() → a', 'an optional function with a return value', {
     kind: 'Nullable',
     type: {
       kind: 'Function',
@@ -116,25 +116,40 @@ describe('parser', () => {
     }
   });
 
-  check('(a) → b', 'a call signature with one parameter and a return value', {
+  check('(a: b)', 'a function with one named parameter', {
     kind: 'Function',
     parameters: [
       {
-        kind: 'Entity',
-        name: 'a'
+        kind: 'FunctionParameter',
+        name: 'a',
+        type: {
+          kind: 'Entity',
+          name: 'b'
+        }
       }
-    ],
-    returnType: {
-      kind: 'Entity',
-      name: 'b'
-    }
+    ]
   });
 
-  check('(?a) → b', 'a call signature with an optional parameter and a return value', {
+  check('(...a: b)', 'a function with one named rest parameter', {
     kind: 'Function',
     parameters: [
       {
-        kind: 'Nullable',
+        kind: 'FunctionParameter',
+        name: 'a',
+        rest: true,
+        type: {
+          kind: 'Entity',
+          name: 'b'
+        }
+      }
+    ]
+  });
+
+  check('(a) → b', 'a function with one parameter and a return value', {
+    kind: 'Function',
+    parameters: [
+      {
+        kind: 'FunctionParameter',
         type: {
           kind: 'Entity',
           name: 'a'
@@ -147,18 +162,44 @@ describe('parser', () => {
     }
   });
 
-  check('(a, ?b) → c', 'a call signature with multiple parameters', {
+  check('(?a) → b', 'a function with an optional parameter and a return value', {
     kind: 'Function',
     parameters: [
       {
-        kind: 'Entity',
-        name: 'a'
-      },
+        kind: 'FunctionParameter',
+        type: {
+          kind: 'Nullable',
+          type: {
+            kind: 'Entity',
+            name: 'a'
+          }
+        }
+      }
+    ],
+    returnType: {
+      kind: 'Entity',
+      name: 'b'
+    }
+  });
+
+  check('(a, ?b) → c', 'a function with multiple parameters', {
+    kind: 'Function',
+    parameters: [
       {
-        kind: 'Nullable',
+        kind: 'FunctionParameter',
         type: {
           kind: 'Entity',
-          name: 'b'
+          name: 'a'
+        }
+      },
+      {
+        kind: 'FunctionParameter',
+        type: {
+          kind: 'Nullable',
+          type: {
+            kind: 'Entity',
+            name: 'b'
+          }
         }
       }
     ],
