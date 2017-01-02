@@ -14,12 +14,12 @@ describe('scanner', () => {
   ]);
 
   check('→', [
-    SyntaxKind.RightArrow,
+    SyntaxKind.RightArrowToken,
     SyntaxKind.EndOfFileToken
   ]);
 
   check('->', [
-    SyntaxKind.RightArrow,
+    SyntaxKind.RightArrowToken,
     SyntaxKind.EndOfFileToken
   ]);
 
@@ -68,6 +68,16 @@ describe('scanner', () => {
     SyntaxKind.EndOfFileToken
   ]);
 
+  check('*', [
+    SyntaxKind.AsteriskToken,
+    SyntaxKind.EndOfFileToken
+  ]);
+
+  check('any', [
+    SyntaxKind.AnyKeyword,
+    SyntaxKind.EndOfFileToken
+  ]);
+
   check('a', [
     { kind: SyntaxKind.Identifier, value: 'a' },
     SyntaxKind.EndOfFileToken
@@ -100,6 +110,26 @@ describe('scanner', () => {
     SyntaxKind.EndOfFileToken
   ]);
 
+  check('0', [
+    { kind: SyntaxKind.NumberLiteral, value: '0' },
+    SyntaxKind.EndOfFileToken
+  ]);
+
+  check('012', [
+    { kind: SyntaxKind.NumberLiteral, value: '12' },
+    SyntaxKind.EndOfFileToken
+  ]);
+
+  check('1.0', [
+    { kind: SyntaxKind.NumberLiteral, value: '1' },
+    SyntaxKind.EndOfFileToken
+  ]);
+
+  check('1.1', [
+    { kind: SyntaxKind.NumberLiteral, value: '1.1' },
+    SyntaxKind.EndOfFileToken
+  ]);
+
   check('union', [
     SyntaxKind.UnionKeyword,
     SyntaxKind.EndOfFileToken
@@ -120,7 +150,7 @@ describe('scanner', () => {
       SyntaxKind.QuestionToken,
       { kind: SyntaxKind.Identifier, value: 'number' },
       SyntaxKind.CloseParenToken,
-      SyntaxKind.RightArrow,
+      SyntaxKind.RightArrowToken,
       SyntaxKind.QuestionToken,
       SyntaxKind.UnionKeyword,
       SyntaxKind.LessThanToken,
@@ -148,6 +178,7 @@ describe('scanner', () => {
       switch (token) {
         case SyntaxKind.Identifier:
         case SyntaxKind.StringLiteral:
+        case SyntaxKind.NumberLiteral:
           tokens.push({ kind: token, value: scanner.getTokenValue() });
           break;
         default:

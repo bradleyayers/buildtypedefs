@@ -13,6 +13,9 @@ export function parse(text: string) {
 
   function parseType(): TypeNode {
     switch (token) {
+      case SyntaxKind.AsteriskToken:
+      case SyntaxKind.AnyKeyword:
+        return parseAny();
       case SyntaxKind.OpenBracketToken:
         return parseArray();
       case SyntaxKind.OpenParenToken:
@@ -27,9 +30,27 @@ export function parse(text: string) {
         return parseObject();
       case SyntaxKind.StringLiteral:
         return parseStringLiteral();
+      case SyntaxKind.NumberLiteral:
+        return parseNumberLiteral();
       default:
         throw new Error(`Unable to parse token ${token}`);
     }
+  }
+
+  function parseAny(): AnyTypeNode {
+    nextToken();
+    return {
+      kind: 'Any'
+    };
+  }
+
+  function parseNumberLiteral(): NumberLiteralTypeNode {
+    const value = scanner.getTokenValue();
+    nextToken();
+    return {
+      kind: 'NumberLiteral',
+      value
+    };
   }
 
   function parseStringLiteral(): StringLiteralTypeNode {
@@ -112,7 +133,7 @@ export function parse(text: string) {
       kind: 'Function',
       parameters,
     };
-    if (skipOptional(SyntaxKind.RightArrow)) {
+    if (skipOptional(SyntaxKind.RightArrowToken)) {
       func.returnType = parseType();
     }
     return func;
@@ -207,6 +228,15 @@ export interface StringLiteralTypeNode {
   value: string;
 }
 
+export interface NumberLiteralTypeNode {
+  kind: 'NumberLiteral';
+  value: string;
+}
+
+export interface AnyTypeNode {
+  kind: 'Any';
+}
+
 export type TypeNode = NullableTypeNode
   | EntityTypeNode
   | UnionTypeNode
@@ -214,7 +244,9 @@ export type TypeNode = NullableTypeNode
   | ArrayTypeNode
   | ObjectTypeNode
   | ObjectMemberTypeNode
-  | StringLiteralTypeNode;
+  | StringLiteralTypeNode
+  | NumberLiteralTypeNode
+  | AnyTypeNode;
 
 enum ParsingContext {
   Parameters,

@@ -42,7 +42,10 @@ export function createScanner(text: string) {
           return token = SyntaxKind.CloseParenToken;
         case CharacterCodes.rightArrow:
           pos++;
-          return token = SyntaxKind.RightArrow;
+          return token = SyntaxKind.RightArrowToken;
+        case CharacterCodes.asterisk:
+          pos++;
+          return token = SyntaxKind.AsteriskToken;
         case CharacterCodes.question:
           pos++;
           return token = SyntaxKind.QuestionToken;
@@ -73,6 +76,18 @@ export function createScanner(text: string) {
         case CharacterCodes.colon:
           pos++;
           return token = SyntaxKind.ColonToken;
+        case CharacterCodes._0:
+        case CharacterCodes._1:
+        case CharacterCodes._2:
+        case CharacterCodes._3:
+        case CharacterCodes._4:
+        case CharacterCodes._5:
+        case CharacterCodes._6:
+        case CharacterCodes._7:
+        case CharacterCodes._8:
+        case CharacterCodes._9:
+          tokenValue = scanNumber();
+          return token = SyntaxKind.NumberLiteral;
         case CharacterCodes.doubleQuote:
           tokenValue = scanString();
           return token = SyntaxKind.StringLiteral;
@@ -80,7 +95,7 @@ export function createScanner(text: string) {
           // Treat '->' as equivalent to →
           if (ch === CharacterCodes.minus && text.charCodeAt(pos + 1) === CharacterCodes.greaterThan) {
             pos += 2;
-            return token = SyntaxKind.RightArrow;
+            return token = SyntaxKind.RightArrowToken;
           }
 
           // Identifier
@@ -90,7 +105,9 @@ export function createScanner(text: string) {
             tokenValue = text.substring(tokenPos, pos);
             switch (tokenValue) {
               case 'union':
-                return token = SyntaxKind.UnionKeyword
+                return token = SyntaxKind.UnionKeyword;
+              case 'any':
+                return token = SyntaxKind.AnyKeyword;
               default:
                 return token = SyntaxKind.Identifier;
             }
@@ -100,6 +117,26 @@ export function createScanner(text: string) {
     }
   }
 
+  /**
+   * Scan a number literal.
+   */
+  function scanNumber(): string {
+    const start = pos;
+    while (isDigit(text.charCodeAt(pos))) pos++;
+    if (text.charCodeAt(pos) === CharacterCodes.dot) {
+      pos++;
+      while (isDigit(text.charCodeAt(pos))) pos++;
+    }
+    return "" + +(text.substring(start, pos));
+  }
+
+  /**
+   * Scan a string literal.
+   *
+   * Spec:
+   *
+   *   A string literal, enclosed by double quotes, or a number literal.
+   */
   function scanString(): string {
     const quote = text.charCodeAt(pos);
     pos++;
@@ -189,21 +226,16 @@ export enum SyntaxKind {
   EndOfFileToken,
   Unknown,
   // Literals
-  NumericLiteral,
+  NumberLiteral,
   StringLiteral,
   // Type
-  TypePredicate,
   TypeReference,
   FunctionType,
   ConstructorType,
-  TypeQuery,
   TypeLiteral,
   ArrayType,
-  TupleType,
   UnionType,
-  IntersectionType,
   ParenthesizedType,
-  ThisType,
   LiteralType,
   // Identifiers
   Identifier,
@@ -216,12 +248,14 @@ export enum SyntaxKind {
   CloseBracketToken,
   DotToken,
   CommaToken,
-  RightArrow,
+  RightArrowToken,
   QuestionToken,
   LessThanToken,
   GreaterThanToken,
   ColonToken,
+  AsteriskToken,
   // Reserved words
+  AnyKeyword,
   UnionKeyword,
 }
 
@@ -363,9 +397,14 @@ export const enum CharacterCodes {
   rightArrow = 0x2192,          // →
 }
 
+function isDigit(ch: number): boolean {
+  return ch >= CharacterCodes._0 && ch <= CharacterCodes._9;
+}
+
 const Errors = {
   Unexpected_end_of_text: 'Unexpected end of text.',
   Unterminated_string_literal: 'Unterminated string literal.',
   Unsupported_unicode_escape: 'Unicode escape codes are unsupported.',
-  Unsupported_hex_escape: 'Hex escape codes are unsupported.'
+  Unsupported_hex_escape: 'Hex escape codes are unsupported.',
+  Digit_expected: 'Digit expected.'
 };

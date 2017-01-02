@@ -4,6 +4,14 @@ import { parse } from '../../src/getdocs/parser';
 import { SyntaxKind } from '../../src/getdocs/scanner';
 
 describe('parser', () => {
+  check('*', 'an any', {
+    kind: 'Any'
+  });
+
+  check('any', 'an any', {
+    kind: 'Any'
+  });
+
   check('a', 'an entity', {
     kind: 'Entity',
     name: 'a'
@@ -30,6 +38,11 @@ describe('parser', () => {
   check('"a"', 'an empty string literal', {
     kind: 'StringLiteral',
     value: 'a'
+  });
+
+  check('0', 'a number literal', {
+    kind: 'NumberLiteral',
+    value: '0'
   });
 
   check('union<a>', 'a union with a single entity', {
