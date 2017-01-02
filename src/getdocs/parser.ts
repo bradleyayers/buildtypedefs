@@ -23,7 +23,7 @@ export function parse(text: string) {
       case SyntaxKind.QuestionToken:
         return parseNullable();
       case SyntaxKind.Identifier:
-        return parseEntity();
+        return parseName();
       case SyntaxKind.UnionKeyword:
         return parseUnion();
       case SyntaxKind.OpenBraceToken:
@@ -66,7 +66,7 @@ export function parse(text: string) {
     invariant(token === SyntaxKind.OpenBraceToken);
     return {
       kind: 'Object',
-      members: parseBracketedList(ParsingContext.LiteralTypeMembers, parseTypeLiteralMember, SyntaxKind.OpenBraceToken, SyntaxKind.CloseBraceToken);
+      members: parseBracketedList(ParsingContext.LiteralTypeMembers, parseTypeLiteralMember, SyntaxKind.OpenBraceToken, SyntaxKind.CloseBraceToken)
     };
   }
 
@@ -106,21 +106,29 @@ export function parse(text: string) {
     return identifier;
   }
 
-  function parseEntity(): EntityTypeNode {
+  function parseName(): NameTypeNode {
     let name = parseIdentifier();
     while (skipOptional(SyntaxKind.DotToken)) {
       name += '.' + parseIdentifier();
     }
-    return {
-      kind: 'Entity',
+    let parameters;
+    if (token === SyntaxKind.LessThanToken) {
+      parameters = parseBracketedList(ParsingContext.NameParameters, parseType, SyntaxKind.LessThanToken, SyntaxKind.GreaterThanToken);
+    }
+    const node: NameTypeNode = {
+      kind: 'Name',
       name
     };
+    if (parameters) {
+      node.parameters = parameters;
+    }
+    return node;
   }
 
   function parseUnion(): UnionTypeNode {
     invariant(token === SyntaxKind.UnionKeyword);
     nextToken();
-    const types = parseBracketedList(ParsingContext.TypeParameters, parseType, SyntaxKind.LessThanToken, SyntaxKind.GreaterThanToken);
+    const types = parseBracketedList(ParsingContext.NameParameters, parseType, SyntaxKind.LessThanToken, SyntaxKind.GreaterThanToken);
     return {
       kind: 'Union',
       types
@@ -129,14 +137,14 @@ export function parse(text: string) {
 
   function parseFunction(): FunctionTypeNode {
     const parameters = parseBracketedList(ParsingContext.Parameters, parseFunctionParameter, SyntaxKind.OpenParenToken, SyntaxKind.CloseParenToken);
-    const func: FunctionTypeNode = {
+    const node: FunctionTypeNode = {
       kind: 'Function',
       parameters,
     };
     if (skipOptional(SyntaxKind.RightArrowToken)) {
-      func.returnType = parseType();
+      node.returnType = parseType();
     }
-    return func;
+    return node;
   }
 
   function parseFunctionParameter(): FunctionParameterTypeNode {
@@ -152,17 +160,17 @@ export function parse(text: string) {
       skipExpected(SyntaxKind.ColonToken);
     }
     const type = parseType();
-    const functionParameter: FunctionParameterTypeNode = {
+    const node: FunctionParameterTypeNode = {
       kind: 'FunctionParameter',
       type,
     };
     if (rest) {
-      functionParameter.rest = rest;
+      node.rest = rest;
     }
     if (name) {
-      functionParameter.name = name;
+      node.name = name;
     }
-    return functionParameter;
+    return node;
   }
 
   function parseBracketedList<T>(context: ParsingContext, parseElement: () => T, open: SyntaxKind, close: SyntaxKind): T[] {
@@ -201,7 +209,7 @@ export function parse(text: string) {
 
   function isListTerminator(context: ParsingContext): boolean {
     switch (context) {
-      case ParsingContext.TypeParameters:
+      case ParsingContext.NameParameters:
         return token === SyntaxKind.GreaterThanToken;
       case ParsingContext.Parameters:
         return token === SyntaxKind.CloseParenToken;
@@ -217,14 +225,28 @@ export function parse(text: string) {
   }
 }
 
+/**
+ * Spec:
+ *
+ *   A nullable type, written as a question mark followed by a type.
+ */
 export interface NullableTypeNode {
   kind: 'Nullable';
   type: TypeNode;
 }
 
-export interface EntityTypeNode {
-  kind: 'Entity';
+/**
+ * Spec:
+ *
+ *   A JavaScript identifier, optionally followed by any number of properties,
+ *   which are a dot character followed by a JavaScript identifier. A type name
+ *   can be followed by a list of type parameters, between angle brackets, as in
+ *   Object<string> (an object whose properties hold string values).
+ */
+export interface NameTypeNode {
+  kind: 'Name';
   name: string;
+  parameters?: TypeNode[];
 }
 
 export interface UnionTypeNode {
@@ -232,6 +254,15 @@ export interface UnionTypeNode {
   types: TypeNode[];
 }
 
+/**
+ * Spec:
+ *
+ *   A function type, which is written as a parenthesized list of argument types.
+ *   Each argument type may optionally be prefixed with an argument name, which is
+ *   an identifier followed by a colon. When an argument is prefixed by the string
+ *   ..., it is marked as a rest argument. After the closing parenthesis, an
+ *   optional return type may appear after an arrow, written either → or ->.
+ */
 export interface FunctionTypeNode {
   kind: 'Function';
   parameters: FunctionParameterTypeNode[];
@@ -245,11 +276,23 @@ export interface FunctionParameterTypeNode {
   type: TypeNode;
 }
 
+/**
+ * Spec:
+ *
+ *   An array type, which is a type wrapped in [ and ]. [x] is equivalent to Array<x>.
+ */
 export interface ArrayTypeNode {
   kind: 'Array';
   type: TypeNode;
 }
 
+/**
+ * Spec:
+ *
+ *   An object type, written as a list of properties wrapped in { and } braces.
+ *   Each property must start with an identifier, followed by a colon, followed by
+ *   a type.
+ */
 export interface ObjectTypeNode {
   kind: 'Object';
   members: ObjectMemberTypeNode[];
@@ -261,6 +304,11 @@ export interface ObjectMemberTypeNode {
   type: TypeNode;
 }
 
+/**
+ * Spec:
+ *
+ *   A string literal, enclosed by double quotes, or a number literal.
+ */
 export interface StringLiteralTypeNode {
   kind: 'StringLiteral';
   value: string;
@@ -271,12 +319,17 @@ export interface NumberLiteralTypeNode {
   value: string;
 }
 
+/**
+ * Spec:
+ *
+ *   An unspecified or “any” type, written as an asterisk *.
+ */
 export interface AnyTypeNode {
   kind: 'Any';
 }
 
 export type TypeNode = NullableTypeNode
-  | EntityTypeNode
+  | NameTypeNode
   | UnionTypeNode
   | FunctionTypeNode
   | ArrayTypeNode
@@ -288,6 +341,6 @@ export type TypeNode = NullableTypeNode
 
 enum ParsingContext {
   Parameters,
-  TypeParameters,
+  NameParameters,
   LiteralTypeMembers,
 }

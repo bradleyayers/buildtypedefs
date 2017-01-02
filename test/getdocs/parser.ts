@@ -12,20 +12,31 @@ describe('parser', () => {
     kind: 'Any'
   });
 
-  check('a', 'an entity', {
-    kind: 'Entity',
+  check('a', 'a name', {
+    kind: 'Name',
     name: 'a'
   });
 
-  check('a.b', 'an entity name', {
-    kind: 'Entity',
+  check('a.b', 'a name with a dot', {
+    kind: 'Name',
     name: 'a.b'
   });
 
-  check('?a', 'an optional entity', {
+  check('a<b>', 'a name with a parameter ', {
+    kind: 'Name',
+    name: 'a',
+    parameters: [
+      {
+        kind: 'Name',
+        name: 'b'
+      }
+    ]
+  });
+
+  check('?a', 'an optional name', {
     kind: 'Nullable',
     type: {
-      kind: 'Entity',
+      kind: 'Name',
       name: 'a'
     }
   });
@@ -45,11 +56,11 @@ describe('parser', () => {
     value: '0'
   });
 
-  check('union<a>', 'a union with a single entity', {
+  check('union<a>', 'a union with a single name', {
     kind: 'Union',
     types: [
       {
-        kind: 'Entity',
+        kind: 'Name',
         name: 'a'
       }
     ]
@@ -59,11 +70,11 @@ describe('parser', () => {
     kind: 'Union',
     types: [
       {
-        kind: 'Entity',
+        kind: 'Name',
         name: 'a'
       },
       {
-        kind: 'Entity',
+        kind: 'Name',
         name: 'b'
       }
     ]
@@ -75,7 +86,7 @@ describe('parser', () => {
       kind: 'Union',
       types: [
         {
-          kind: 'Entity',
+          kind: 'Name',
           name: 'a'
         }
       ]
@@ -99,7 +110,7 @@ describe('parser', () => {
     kind: 'Function',
     parameters: [],
     returnType: {
-      kind: 'Entity',
+      kind: 'Name',
       name: 'a'
     }
   });
@@ -110,7 +121,7 @@ describe('parser', () => {
       kind: 'Function',
       parameters: [],
       returnType: {
-        kind: 'Entity',
+        kind: 'Name',
         name: 'a'
       }
     }
@@ -123,7 +134,7 @@ describe('parser', () => {
         kind: 'FunctionParameter',
         name: 'a',
         type: {
-          kind: 'Entity',
+          kind: 'Name',
           name: 'b'
         }
       }
@@ -138,7 +149,7 @@ describe('parser', () => {
         name: 'a',
         rest: true,
         type: {
-          kind: 'Entity',
+          kind: 'Name',
           name: 'b'
         }
       }
@@ -151,13 +162,13 @@ describe('parser', () => {
       {
         kind: 'FunctionParameter',
         type: {
-          kind: 'Entity',
+          kind: 'Name',
           name: 'a'
         }
       }
     ],
     returnType: {
-      kind: 'Entity',
+      kind: 'Name',
       name: 'b'
     }
   });
@@ -170,14 +181,14 @@ describe('parser', () => {
         type: {
           kind: 'Nullable',
           type: {
-            kind: 'Entity',
+            kind: 'Name',
             name: 'a'
           }
         }
       }
     ],
     returnType: {
-      kind: 'Entity',
+      kind: 'Name',
       name: 'b'
     }
   });
@@ -188,7 +199,7 @@ describe('parser', () => {
       {
         kind: 'FunctionParameter',
         type: {
-          kind: 'Entity',
+          kind: 'Name',
           name: 'a'
         }
       },
@@ -197,14 +208,14 @@ describe('parser', () => {
         type: {
           kind: 'Nullable',
           type: {
-            kind: 'Entity',
+            kind: 'Name',
             name: 'b'
           }
         }
       }
     ],
     returnType: {
-      kind: 'Entity',
+      kind: 'Name',
       name: 'c'
     }
   });
@@ -212,24 +223,24 @@ describe('parser', () => {
   check('[a]', 'an array', {
     kind: 'Array',
     type: {
-      kind: 'Entity',
+      kind: 'Name',
       name: 'a'
     }
   });
 
-  check('{}', 'an empty type literal', {
+  check('{}', 'an empty object type', {
     kind: 'Object',
     members: []
   });
 
-  check('{node: dom.Node, offset: number}', 'an type literal', {
+  check('{node: dom.Node, offset: number}', 'an object type', {
     kind: 'Object',
     members: [
       {
         kind: 'ObjectMember',
         name: 'node',
         type: {
-          kind: 'Entity',
+          kind: 'Name',
           name: 'dom.Node'
         }
       },
@@ -237,7 +248,7 @@ describe('parser', () => {
         kind: 'ObjectMember',
         name: 'offset',
         type: {
-          kind: 'Entity',
+          kind: 'Name',
           name: 'number'
         }
       }
