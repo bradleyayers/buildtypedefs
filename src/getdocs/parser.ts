@@ -1,16 +1,3 @@
-// import {
-//   IdentifierNode,
-//   TypeKind,
-//   ParsingContext,
-//   UnionTypeNode,
-//   EntityTypeNode,
-//   OptionalTypeNode,
-//   TypeNode,
-//   CallSignatureTypeNode,
-//   ArrayTypeNode,
-//   TypeLiteralTypeNode,
-//   PropertySignatureTypeNode
-// } from './types';
 import { createScanner, SyntaxKind } from './scanner';
 import invariant from '../invariant';
 
