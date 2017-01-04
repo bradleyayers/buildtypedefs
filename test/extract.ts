@@ -88,7 +88,11 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'foo'
+          typeSpec: 'foo',
+          type: {
+            kind: 'Name',
+            name: 'foo'
+          }
         }
       ]);
 
@@ -98,7 +102,11 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'foo'
+          typeSpec: 'foo',
+          type: {
+            kind: 'Name',
+            name: 'foo'
+          }
         }
       ]);
 
@@ -110,10 +118,18 @@ describe('extract', () => {
         {
           name: 'a',
           typeSpec: 'foo',
+          type: {
+            kind: 'Name',
+            name: 'foo'
+          },
           properties: [
             {
               name: 'b',
-              typeSpec: 'foo'
+              typeSpec: 'foo',
+              type: {
+                kind: 'Name',
+                name: 'foo'
+              }
             }
           ]
         }
@@ -129,14 +145,26 @@ describe('extract', () => {
         {
           name: 'a',
           typeSpec: 'foo',
+          type: {
+            kind: 'Name',
+            name: 'foo'
+          },
           properties: [
             {
               name: 'b',
-              typeSpec: 'foo'
+              typeSpec: 'foo',
+              type: {
+                kind: 'Name',
+                name: 'foo'
+              }
             },
             {
               name: 'c',
-              typeSpec: 'foo'
+              typeSpec: 'foo',
+              type: {
+                kind: 'Name',
+                name: 'foo'
+              }
             }
           ]
         }
@@ -152,14 +180,26 @@ describe('extract', () => {
         {
           name: 'a',
           typeSpec: 'foo',
+          type: {
+            kind: 'Name',
+            name: 'foo'
+          },
           properties: [
             {
               name: 'b',
               typeSpec: 'foo',
+              type: {
+                kind: 'Name',
+                name: 'foo'
+              },
               properties: [
                 {
                   name: 'c',
-                  typeSpec: 'foo'
+                  typeSpec: 'foo',
+                  type: {
+                    kind: 'Name',
+                    name: 'foo'
+                  }
                 }
               ]
             }
@@ -174,7 +214,10 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'interface'
+          typeSpec: 'interface',
+          type: {
+            kind: 'Interface'
+          }
         }
       ]);
 
@@ -184,7 +227,10 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'interface'
+          typeSpec: 'interface',
+          type: {
+            kind: 'Interface'
+          }
         }
       ]);
 
@@ -195,7 +241,10 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'interface'
+          typeSpec: 'interface',
+          type: {
+            kind: 'Interface'
+          }
         }
       ]);
 
@@ -207,7 +256,10 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'interface'
+          typeSpec: 'interface',
+          type: {
+            kind: 'Interface'
+          }
         }
       ]);
 
@@ -218,7 +270,10 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'interface'
+          typeSpec: 'interface',
+          type: {
+            kind: 'Interface'
+          }
         }
       ]);
 
@@ -229,11 +284,17 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'interface'
+          typeSpec: 'interface',
+          type: {
+            kind: 'Interface'
+          }
         },
         {
           name: 'b',
-          typeSpec: 'interface'
+          typeSpec: 'interface',
+          type: {
+            kind: 'Interface'
+          }
         }
       ]);
 
@@ -245,10 +306,16 @@ describe('extract', () => {
         {
           name: 'a',
           typeSpec: 'interface',
+          type: {
+            kind: 'Interface'
+          },
           properties: [
             {
               name: 'b',
-              typeSpec: 'interface'
+              typeSpec: 'interface',
+              type: {
+                kind: 'Interface'
+              }
             }
           ]
         }
@@ -272,7 +339,9 @@ describe('extract', () => {
       `, [
         {
           name: 'Foo',
-          typeSpec: 'class'
+          type: {
+            kind: 'Class',
+          },
         }
       ]);
 
@@ -282,7 +351,9 @@ describe('extract', () => {
       `, [
         {
           name: 'a',
-          typeSpec: 'class'
+          type: {
+            kind: 'Class',
+          },
         }
       ]);
 
@@ -295,11 +366,33 @@ describe('extract', () => {
       `, [
         {
           name: 'Foo',
-          typeSpec: 'class',
+          type: {
+            kind: 'Class',
+          },
           properties: [
             {
               name: 'bar',
               typeSpec: '(?Object) → ContentMatch',
+              type: {
+                kind: 'Function',
+                parameters: [
+                  {
+                    kind: 'FunctionParameter',
+                    name: 'a',
+                    type: {
+                      kind: 'Nullable',
+                      type: {
+                        kind: 'Name',
+                        name: 'Object'
+                      }
+                    }
+                  }
+                ],
+                returnType: {
+                  kind: 'Name',
+                  name: 'ContentMatch'
+                }
+              }
             }
           ]
         }
@@ -313,11 +406,33 @@ describe('extract', () => {
       `, [
         {
           name: 'Foo',
-          typeSpec: 'class',
+          type: {
+            kind: 'Class',
+          },
           properties: [
             {
               name: 'bar',
               typeSpec: '(?Object) → ContentMatch',
+              type: {
+                kind: 'Function',
+                parameters: [
+                  {
+                    kind: 'FunctionParameter',
+                    name: 'a',
+                    type: {
+                      kind: 'Nullable',
+                      type: {
+                        kind: 'Name',
+                        name: 'Object'
+                      }
+                    }
+                  }
+                ],
+                returnType: {
+                  kind: 'Name',
+                  name: 'ContentMatch'
+                }
+              }
             }
           ]
         }
@@ -331,11 +446,17 @@ describe('extract', () => {
       `, [
         {
           name: 'Foo',
-          typeSpec: 'class',
+          type: {
+            kind: 'Class'
+          },
           properties: [
             {
               name: 'bar',
               typeSpec: 'foo',
+              type: {
+                kind: 'Name',
+                name: 'foo'
+              }
             }
           ]
         }
@@ -348,10 +469,16 @@ describe('extract', () => {
       `, [
         {
           name: 'Foo',
-          typeSpec: 'class',
+          type: {
+            kind: 'Class'
+          },
           properties: [
             {
               name: 'bar',
+              type: {
+                kind: 'Name',
+                name: 'foo'
+              },
               typeSpec: 'foo',
             }
           ]

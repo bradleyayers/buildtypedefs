@@ -2,6 +2,7 @@ import * as j from 'jscodeshift';
 import { Path, Spec, MethodSpec, PropertySpec, SpecKind } from './types';
 import invariant from './invariant';
 import { closestViaParentPath } from './traverse';
+import { parse, TypeNode } from './getdocs/parser';
 
 export function extractMethod(commentPath: Path): MethodSpec | undefined {
   const methodDefinitionPath = closestViaParentPath(commentPath, j.MethodDefinition);
@@ -51,6 +52,16 @@ export function extractProperty(commentPath: Path): PropertySpec | undefined {
   }
 }
 
+export interface ClassTypeNode {
+  kind: 'Class'
+}
+
+export interface InterfaceTypeNode {
+  kind: 'Interface'
+}
+
+export type ProgramTypeNode = TypeNode | ClassTypeNode | InterfaceTypeNode;
+
 /**
  * Strip off the ' :: ' or ' : ' prefix.
  */
@@ -64,6 +75,7 @@ function stripCommentSpecPrefix(prefixedSpec: string): string {
 export interface Declaration {
   name?: string;
   typeSpec?: string;
+  type?: ProgramTypeNode;
   properties?: Declaration[];
 }
 
@@ -154,7 +166,7 @@ export function extract(source: string): Declaration[] {
               const classDeclaration = classDeclarations[0];
               parentDeclaration = {
                 name: nameFromPath(classDeclaration),
-                typeSpec: typeSpecFromPath(classDeclaration)
+                type: typeFromPath(classDeclaration),
               };
               declarations.push(parentDeclaration);
               nodeToDeclarationMap.push({ path: classDeclaration, declaration: parentDeclaration });
@@ -202,10 +214,10 @@ export function extract(source: string): Declaration[] {
       }
     }
 
-    function typeSpecFromPath(path: any): string {
+    function typeFromPath(path: any): ProgramTypeNode {
       switch (path.value.type) {
         case 'ClassDeclaration':
-          return 'class';
+          return { kind: 'Class' };
         default:
           throw new Error(`Unable to derive declaration type from a '${path.value.type}'.`);
       }
@@ -218,7 +230,33 @@ export function extract(source: string): Declaration[] {
       // A declaration without a name implicitly applies to the next
       // program element. We derive the name based on that.
       declaration.name = identifier || nameFromPath(comments.associatedNodePath);
-      declaration.typeSpec = typeSpec || typeSpecFromPath(comments.associatedNodePath);
+      if (typeSpec) {
+        declaration.typeSpec = typeSpec
+        declaration.type = typeSpec === 'interface'
+          ? { kind: 'Interface' }
+          : parse(declaration.typeSpec);
+      } else {
+        declaration.type = typeFromPath(comments.associatedNodePath);
+      }
+
+      if (comments.associatedNodePath.value.type === 'MethodDefinition') {
+        if (declaration.type.kind === 'Function') {
+          const functionDefinition = comments.associatedNodePath.value.value;
+          const paramNames = functionDefinition.params.map(node => {
+            switch (node.type) {
+              case 'Identifier': // foo(bar) {}
+                return node.name;
+              case 'AssignmentPattern': // foo(bar = 1) {}
+                return node.left.name;
+            }
+          });
+          for (let i = 0; i < declaration.type.parameters.length; i++) {
+            if (!declaration.type.parameters[i].name) {
+              declaration.type.parameters[i].name = paramNames[i];
+            }
+          }
+        }
+      }
 
       skipUntil('EmptyLine');
 
