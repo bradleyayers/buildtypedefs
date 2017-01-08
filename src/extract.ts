@@ -2,7 +2,7 @@ import * as j from 'jscodeshift';
 import { Path, Spec, MethodSpec, PropertySpec, SpecKind } from './types';
 import invariant from './invariant';
 import { closestViaParentPath } from './traverse';
-import { parse, TypeNode } from './getdocs/parser';
+import { parse, TypeNode, FunctionParameterTypeNode } from './getdocs/parser';
 
 export function extractMethod(commentPath: Path): MethodSpec | undefined {
   const methodDefinitionPath = closestViaParentPath(commentPath, j.MethodDefinition);
@@ -53,11 +53,12 @@ export function extractProperty(commentPath: Path): PropertySpec | undefined {
 }
 
 export interface ClassTypeNode {
-  kind: 'Class'
+  kind: 'Class';
+  ctor?: FunctionParameterTypeNode[];
 }
 
 export interface InterfaceTypeNode {
-  kind: 'Interface'
+  kind: 'Interface';
 }
 
 export type ProgramTypeNode = TypeNode | ClassTypeNode | InterfaceTypeNode;
@@ -174,8 +175,12 @@ export function extract(source: string): Declaration[] {
           }
 
           if (parentDeclaration) {
-            parentDeclaration.properties = parentDeclaration.properties || [];
-            parentDeclaration.properties.push(declaration);
+            if (declaration.type.kind === 'Function' && declaration.name === 'constructor' && parentDeclaration.type.kind === 'Class') {
+              parentDeclaration.type.ctor = declaration.type.parameters;
+            } else {
+              parentDeclaration.properties = parentDeclaration.properties || [];
+              parentDeclaration.properties.push(declaration);
+            }
           } else {
             declarations.push(declaration);
           }
@@ -209,6 +214,12 @@ export function extract(source: string): Declaration[] {
           return node.id.name;
         case 'MethodDefinition':
           return node.key.name;
+        case 'ExpressionStatement':
+          return j(node)
+            .find(j.ThisExpression)
+            .paths()[0]
+            .parent.value // MemberExpression (this.foo)
+            .property.name; // foo
         default:
           throw new Error(`Unable to derive declaration name from a '${node.type}'.`);
       }

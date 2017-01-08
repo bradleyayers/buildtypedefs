@@ -484,6 +484,83 @@ describe('extract', () => {
           ]
         }
       ]);
+
+    check('constructor initialised property of an undeclared class', `
+      class Foo {
+        constructor(foo) {
+          // :: Foo
+          this.bar = foo
+        }
+      }
+      `, [
+        {
+          name: 'Foo',
+          type: {
+            kind: 'Class'
+          },
+          properties: [
+            {
+              name: 'bar',
+              type: {
+                kind: 'Name',
+                name: 'Foo'
+              },
+              typeSpec: 'Foo',
+            }
+          ]
+        }
+      ]);
+
+    check('constructor initialised property of a declared class', `
+      // ::-
+      class Foo {
+        constructor(foo) {
+          // :: Foo
+          this.bar = foo
+        }
+      }
+      `, [
+        {
+          name: 'Foo',
+          type: {
+            kind: 'Class'
+          },
+          properties: [
+            {
+              name: 'bar',
+              type: {
+                kind: 'Name',
+                name: 'Foo'
+              },
+              typeSpec: 'Foo',
+            }
+          ]
+        }
+      ]);
+
+    check('constructor', `
+      class Foo {
+        // :: (number)
+        constructor(num) {}
+      }
+      `, [
+        {
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+            ctor: [
+              {
+                kind: 'FunctionParameter',
+                name: 'num',
+                type: {
+                  kind: 'Name',
+                  name: 'number'
+                }
+              }
+            ],
+          },
+        }
+      ]);
   });
 
 
