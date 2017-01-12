@@ -12,6 +12,12 @@ export function compile(javascriptSource: string): string {
       case 'Interface':
         exportedDeclarations.push(renderInterface(declaration));
         break;
+      case 'Function':
+        exportedDeclarations.push(renderFunction(declaration));
+        break;
+      case 'Name':
+        exportedDeclarations.push(renderName(declaration));
+        break;
       default:
         throw new Error(`Unable to render declaration '${declaration.type.kind}'.`);
     }
@@ -20,15 +26,24 @@ export function compile(javascriptSource: string): string {
   return exportedDeclarations.join('\n\n') + '\n';
 }
 
+function renderName(nameDeclaration: Declaration): string {
+  const source = [];
+
+  if (nameDeclaration.type.kind === 'Name') {
+    source.push(`export const ${nameDeclaration.name}: ${renderType(nameDeclaration.type)};`);
+  }
+
+  return source.join('');
+}
+
 function renderClass(classDeclaration: Declaration): string {
   const { name, properties } = classDeclaration;
   const source = [];
   source.push(`export class ${name} {`);
 
-  if (classDeclaration.type.kind === 'Class' && classDeclaration.type.ctor) {
-    console.log(`constructor = ${classDeclaration.type.ctor}`);
+  if (classDeclaration.type.kind === 'Class' && classDeclaration.type.constructorParameters) {
     source.push('\n  ');
-    source.push(renderConstructor(classDeclaration.type.ctor));
+    source.push(renderConstructor(classDeclaration.type.constructorParameters));
   }
 
   if (properties) {
@@ -64,6 +79,22 @@ function renderInterface(interfaceDeclaration: Declaration): string {
   return source.join('');
 }
 
+function renderFunction(functionDeclaration: Declaration): string {
+  if (functionDeclaration.type.kind === 'Function') {
+    const { name } = functionDeclaration;
+    const { parameters, returnType } = functionDeclaration.type;
+
+    const source = [];
+    source.push(`export function ${name}(${renderParameters(parameters)})`);
+    if (returnType) {
+      source.push(`: ${renderType(returnType)}`);
+    }
+    source.push(' {}');
+
+    return source.join('');
+  }
+}
+
 function renderConstructor(constructor: FunctionParameterTypeNode[]) {
   return `constructor(${renderParameters(constructor)}) {}`;
 }
@@ -74,6 +105,7 @@ function renderProperty(propertyDeclaration: Declaration): string {
     case 'Nullable':
       return `${name}?: ${renderType(type.type)}`;
     case 'Any':
+    case 'Array':
     case 'Function':
     case 'Name':
     case 'Object':
@@ -100,9 +132,20 @@ function renderType(type?: TypeNode): string {
       if (!isIdentifier(type.name)) {
         throw new Error(`Unable to render '${type.name}' as an identifier.`);
       }
-      return type.name;
+      if (type.parameters && type.parameters.length) {
+        return `${type.name}<${type.parameters.map(renderType).join(', ')}>`
+      }
+
+      switch (type.name) {
+        case 'bool':
+          return 'boolean';
+        default:
+          return type.name;
+      }
     case 'Function':
       return `(${renderParameters(type.parameters)}) => ${renderType(type.returnType)}`;
+    case 'Nullable':
+      return `${renderType(type.type)} | null`;
     case 'NumberLiteral':
       return `${type.value}`;
     case 'Object':

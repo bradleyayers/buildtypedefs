@@ -6,5 +6,10 @@
         "sourceMap": true,
         "inlineSources": true,
         "watch": true
-    }
+    },
+    "include": [
+      "src/**/*.ts",
+      "test/*.ts",
+      "test/getdocs/*.ts"
+    ]
 }

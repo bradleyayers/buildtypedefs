@@ -54,14 +54,14 @@ export function extractProperty(commentPath: Path): PropertySpec | undefined {
 
 export interface ClassTypeNode {
   kind: 'Class';
-  ctor?: FunctionParameterTypeNode[];
+  constructorParameters?: FunctionParameterTypeNode[];
 }
 
 export interface InterfaceTypeNode {
   kind: 'Interface';
 }
 
-export type ProgramTypeNode = TypeNode | ClassTypeNode | InterfaceTypeNode;
+export type ProgramTypeNode = ClassTypeNode | InterfaceTypeNode | TypeNode;
 
 /**
  * Strip off the ' :: ' or ' : ' prefix.
@@ -105,7 +105,7 @@ export function extract(source: string): Declaration[] {
 
   type Line = DeclarationLine | DocumentationLine | EmptyLine;
 
-  gatherComments().reverse().forEach(parseComment);
+  gatherComments().forEach(parseComments);
   return declarations;
 
   function parseLine(line: string): Line {
@@ -149,7 +149,36 @@ export function extract(source: string): Declaration[] {
     throw new Error(`Unknown syntax in comment: ${line}`);
   }
 
-  function parseComment(comments: CommentBlock) {
+  // function parseComments(comments: CommentBlock) {
+  //   const { lines, associatedNodePath } = comments;
+  //   let collectedLines = [];
+  //   let remainingLines = lines.length;
+  //   let lastLineNumber = lines[lines.length - 1].loc.start.line;
+  //   while (remainingLines) {
+  //     while (lines[remainingLines - 1])
+  //   }
+  //   for (let i = lines.length - 1; i >= 0; i--) {
+  //     const line = parseLine(lines[i]);
+
+  //   }
+  // }
+
+  function parseComments(comments: CommentBlock) {
+    // A comment block ignores empty lines between comments, which isn't what we want.
+    //
+    // For example there might be a comment block:
+    //
+    //     // Foo:: interface
+    //     //
+    //     //   foo:: number
+    //
+    //     // ::-
+    //     class Bar {
+    //       // bar:: string;
+    //     }
+    //
+    // In this case we want Foo and Bar to be considered separately, and we definitely don't
+    // want Foo associated with the class.
     const lines = comments.lines.map(parseLine);
     const end = lines.length;
     let pos = 0;
@@ -176,7 +205,7 @@ export function extract(source: string): Declaration[] {
 
           if (parentDeclaration) {
             if (declaration.type.kind === 'Function' && declaration.name === 'constructor' && parentDeclaration.type.kind === 'Class') {
-              parentDeclaration.type.ctor = declaration.type.parameters;
+              parentDeclaration.type.constructorParameters = declaration.type.parameters;
             } else {
               parentDeclaration.properties = parentDeclaration.properties || [];
               parentDeclaration.properties.push(declaration);
@@ -184,10 +213,12 @@ export function extract(source: string): Declaration[] {
           } else {
             declarations.push(declaration);
           }
-          nodeToDeclarationMap.push({
-            path: comments.associatedNodePath,
-            declaration
-          });
+          if (comments.associatedNodePath.value.type !== 'Program') {
+            nodeToDeclarationMap.push({
+              path: comments.associatedNodePath,
+              declaration
+            });
+          }
           break;
         case 'DocumentationLine':
         case 'EmptyLine':
@@ -211,6 +242,7 @@ export function extract(source: string): Declaration[] {
       const node = path.node;
       switch (node.type) {
         case 'ClassDeclaration':
+        case 'FunctionDeclaration':
           return node.id.name;
         case 'MethodDefinition':
           return node.key.name;
@@ -220,6 +252,11 @@ export function extract(source: string): Declaration[] {
             .paths()[0]
             .parent.value // MemberExpression (this.foo)
             .property.name; // foo
+        case 'VariableDeclaration':
+          if (node.declarations.length !== 1) {
+            throw new Error('Unable to deal with a multi-variable declaration.');
+          }
+          return node.declarations[0].id.name;
         default:
           throw new Error(`Unable to derive declaration name from a '${node.type}'.`);
       }
@@ -229,6 +266,13 @@ export function extract(source: string): Declaration[] {
       switch (path.value.type) {
         case 'ClassDeclaration':
           return { kind: 'Class' };
+        case 'FunctionDeclaration':
+          return {
+            kind: 'Function',
+            parameters: []
+          }
+        case 'VariableDeclaration':
+          return { kind: 'Any' };
         default:
           throw new Error(`Unable to derive declaration type from a '${path.value.type}'.`);
       }
@@ -354,16 +398,50 @@ export function extract(source: string): Declaration[] {
       }
     });
 
-    return commentsPaths.map(commentsPath => {
-      const lines = j(commentsPath).find(j.Comment).nodes().map(node => node.value);
-      const associatedNodePath = commentsPath.parentPath;
-      return { lines, associatedNodePath };
+    const lineGroups = [];
+
+    function pushLine(line: any) {
+      lineGroups[lineGroups.length - 1].lines.push(line);
+    }
+
+    function lastLineLocStartLine(): number {
+      const lines = lineGroups[lineGroups.length - 1].lines;
+      return lines[lines.length - 1].loc.start.line;
+    }
+
+    function startEmptyBlock(associatedNodePath: any) {
+      lineGroups.push({ lines: [], associatedNodePath });
+    }
+
+    commentsPaths.reverse().forEach(commentsPath => {
+      const lines = j(commentsPath).find(j.Comment).nodes();
+      debugger;
+      startEmptyBlock(commentsPath.parent);
+      pushLine(lines[0]);
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        if (lastLineLocStartLine() !== line.loc.start.line - 1) {
+          startEmptyBlock(commentsPath.parent);
+        }
+        pushLine(line);
+      }
+
+      lineGroups[lineGroups.length - 1].associatedNodePath = commentsPath.parentPath;
+    });
+
+    return lineGroups.map((lineGroup, index) => {
+      const { lines, associatedNodePath } = lineGroup;
+      return {
+        lines: lines.map(line => line.value),
+        associatedNodePath
+      };
     });
   }
 
   interface CommentBlock {
     lines: string[];
-    associatedNodePath: any;
+    associatedNodePath?: any;
   }
 }
 

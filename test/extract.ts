@@ -332,6 +332,90 @@ describe('extract', () => {
     });
   })
 
+  describe('for a variable', () => {
+    check('name', `
+      // ::-
+      const foo = {};
+      `, [
+        {
+          name: 'foo',
+          type: {
+            kind: 'Any'
+          },
+        }
+      ]);
+
+    check('name and interface', `
+      // Bar:: interface
+      //
+      //   baz:: number
+
+      // ::-
+      const foo = {};
+      `, [
+        {
+          name: 'Bar',
+          type: {
+            kind: 'Interface'
+          },
+          typeSpec: 'interface',
+          properties: [
+            {
+              name: 'baz',
+              type: {
+                kind: 'Name',
+                name: 'number'
+              },
+              typeSpec: 'number'
+            }
+          ]
+        },
+        {
+          name: 'foo',
+          type: {
+            kind: 'Any'
+          },
+        }
+      ]);
+  });
+
+  describe('for a function', () => {
+    check('name', `
+      // ::-
+      function foo() {}
+      `, [
+        {
+          name: 'foo',
+          type: {
+            kind: 'Function',
+            parameters: []
+          },
+        }
+      ]);
+
+    check('explicit type', `
+      // :: (bar)
+      function foo() {}
+      `, [
+        {
+          name: 'foo',
+          type: {
+            kind: 'Function',
+            parameters: [
+              {
+                kind: 'FunctionParameter',
+                type: {
+                  kind: 'Name',
+                  name: 'bar'
+                }
+              }
+            ]
+          },
+          typeSpec: '(bar)'
+        }
+      ]);
+  });
+
   describe('for a class', () => {
     check('class name', `
       // ::-
@@ -523,7 +607,7 @@ describe('extract', () => {
         {
           name: 'Foo',
           type: {
-            kind: 'Class'
+            kind: 'Class',
           },
           properties: [
             {
@@ -548,7 +632,7 @@ describe('extract', () => {
           name: 'Foo',
           type: {
             kind: 'Class',
-            ctor: [
+            constructorParameters: [
               {
                 kind: 'FunctionParameter',
                 name: 'num',
