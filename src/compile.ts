@@ -42,13 +42,20 @@ function renderClass(classDeclaration: Declaration): string {
   if (classDeclaration.type.kind !== 'Class') return '';
 
   const { name, properties } = classDeclaration;
-  const { staticProperties } = classDeclaration.type;
+  const { staticProperties, superClass } = classDeclaration.type;
   const source = [];
-  source.push(`export class ${name} {`);
+  source.push(`export class ${name} `);
+
+  if (superClass) {
+    source.push(`extends ${superClass} `);
+  }
+
+  source.push(`{`);
 
   if (classDeclaration.type.constructorParameters) {
     source.push('\n  ');
     source.push(renderConstructor(classDeclaration.type.constructorParameters));
+    source.push('\n');
   }
 
   if (properties) {

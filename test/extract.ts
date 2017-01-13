@@ -672,6 +672,57 @@ describe('extract', () => {
         }
       ]);
 
+    check('super class with declared class', `
+      // ::-
+      class Foo extends Bar {
+        // bar:: foo
+      }
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+            superClass: 'Bar'
+          },
+          properties: [
+            {
+              name: 'bar',
+              type: {
+                kind: 'Name',
+                name: 'foo'
+              },
+              typeSpec: 'foo',
+            }
+          ]
+        }
+      ]);
+
+    check('super class with undeclared class', `
+      class Foo extends Bar {
+        // bar:: foo
+      }
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+            superClass: 'Bar'
+          },
+          properties: [
+            {
+              name: 'bar',
+              type: {
+                kind: 'Name',
+                name: 'foo'
+              },
+              typeSpec: 'foo',
+            }
+          ]
+        }
+      ]);
+
     check('property via getdocs path', `
       class Foo {
         // :: number #path=Foo.prototype.text

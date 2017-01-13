@@ -4,5 +4,6 @@ export interface Bar {
 
 export class Foo {
   constructor(a: number) {}
+
   a: number;
 }

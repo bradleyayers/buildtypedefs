@@ -8,6 +8,7 @@ export interface ClassTypeNode {
   kind: 'Class';
   constructorParameters?: FunctionParameterTypeNode[];
   staticProperties?: Declaration[];
+  superClass?: string;
 }
 
 export interface InterfaceTypeNode {
@@ -151,6 +152,11 @@ export function extract(source: string): Declaration[] {
                 type: typeFromPath(classDeclaration),
                 exported: isIdentifierExported(name),
               };
+              if (classDeclaration.node.superClass) {
+                if (parentDeclaration.type.kind === 'Class') {
+                  parentDeclaration.type.superClass = classDeclaration.node.superClass.name;
+                }
+              }
               declarations.push(parentDeclaration);
               nodeToDeclarationMap.push({ path: classDeclaration, declaration: parentDeclaration });
             }
@@ -174,6 +180,11 @@ export function extract(source: string): Declaration[] {
               case 'Class':
                 if (comments.associatedNodePath.value.type !== 'Program') {
                   declaration.exported = isIdentifierExported(declaration.name);
+                }
+                if (comments.associatedNodePath.node.superClass) {
+                  if (declaration.type.kind === 'Class') {
+                    declaration.type.superClass = comments.associatedNodePath.node.superClass.name;
+                  }
                 }
                 for (let i = declarations.length - 1; i >= 0; i--) {
                   const existingDeclaration = declarations[i];
