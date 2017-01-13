@@ -156,15 +156,23 @@ function renderType(type?: TypeNode): string {
         console.warn(`Unable to render '${type.name}' as an identifier, using '${name}' instead.`);
       }
 
-      if (type.parameters && type.parameters.length) {
-        return `${name}<${type.parameters.map(renderType).join(', ')}>`
-      }
-
       switch (name) {
+        case 'Object':
+          if (type.parameters && type.parameters.length > 1) {
+            throw new Error(`Unable to encode an ${name} with more than one type parameter.`);
+          }
+          const valueType = type.parameters
+            ? renderType(type.parameters[0])
+            : 'any';
+          return `{ [key: string]: ${valueType} }`;
         case 'bool':
           return 'boolean';
         default:
-          return name;
+          if (type.parameters && type.parameters.length) {
+            return `${name}<${type.parameters.map(renderType).join(', ')}>`
+          } else {
+            return name;
+          }
       }
     case 'Function':
       return `(${renderParameters(type.parameters)}) => ${renderType(type.returnType)}`;

@@ -1,1 +1,1 @@
-export const foo: Object<boolean>;
+export const foo: { [key: string]: boolean };
