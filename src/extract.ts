@@ -7,10 +7,16 @@ import { parse, TypeNode, FunctionParameterTypeNode } from './getdocs/parser';
 export interface ClassTypeNode {
   kind: 'Class';
   constructorParameters?: FunctionParameterTypeNode[];
+  staticProperties?: Declaration[];
 }
 
 export interface InterfaceTypeNode {
   kind: 'Interface';
+}
+
+export interface StaticPropertyDescriptor {
+  className: string;
+  propertyName: string
 }
 
 export type ProgramTypeNode = ClassTypeNode | InterfaceTypeNode | TypeNode;
@@ -21,10 +27,11 @@ export interface Declaration {
   type?: ProgramTypeNode;
   properties?: Declaration[];
   exported?: boolean;
+  staticPropertyOf?: string;
 }
 
 export function extract(source: string): Declaration[] {
-  const declarations = [];
+  const declarations: Declaration[] = [];
   const nodeToDeclarationMap = [] as { path: any; declaration: Declaration }[];
   const program = j(source);
 
@@ -49,6 +56,13 @@ export function extract(source: string): Declaration[] {
   type Line = DeclarationLine | DocumentationLine | EmptyLine;
 
   gatherComments().forEach(parseComments);
+
+  for (const declaration of declarations) {
+    if (declaration.staticPropertyOf) {
+      throw new Error(`Unable to find a container '${declaration.staticPropertyOf}' for static property '${declaration.name}'.`)
+    }
+  }
+
   return declarations;
 
   function parseLine(line: string): Line {
@@ -101,8 +115,8 @@ export function extract(source: string): Declaration[] {
       if (identifierPath.node.name === 'exports' &&
         identifierPath.parent.node.type === 'MemberExpression' &&
         identifierPath.parent.node.property.name === identifier) {
-          return true;
-        }
+        return true;
+      }
     }
     return false;
   }
@@ -150,6 +164,17 @@ export function extract(source: string): Declaration[] {
                 if (comments.associatedNodePath.value.type !== 'Program') {
                   declaration.exported = isIdentifierExported(declaration.name);
                 }
+                for (let i = declarations.length - 1; i >= 0; i--) {
+                  const existingDeclaration = declarations[i];
+                  if (existingDeclaration.staticPropertyOf === declaration.name) {
+                    if (declaration.type.kind === 'Class') {
+                      declaration.type.staticProperties = declaration.type.staticProperties || [];
+                       declaration.type.staticProperties.push(existingDeclaration);
+                       delete existingDeclaration.staticPropertyOf;
+                       declarations.splice(i, 1);
+                    }
+                  }
+                }
                 break;
               case 'Interface':
                 declaration.exported = true;
@@ -192,19 +217,28 @@ export function extract(source: string): Declaration[] {
         case 'MethodDefinition':
           return node.key.name;
         case 'ExpressionStatement':
-          return j(node)
-            .find(j.ThisExpression)
-            .paths()[0]
-            .parent.value // MemberExpression (this.foo)
-            .property.name; // foo
+          // We expect to handle two ExpressionStatement cases:
+          //
+          // - a constructor ivar setter -- this.foo = 'bar'
+          // - a static class property -- Foo.foo = 'bar'
+          const thisExpressionPaths = j(node).find(j.ThisExpression).paths();
+          if (thisExpressionPaths.length) {
+            return thisExpressionPaths[0]
+              .parent.value // MemberExpression (this.foo)
+              .property.name; // foo
+          }
+          const staticPropertyDescriptor = getStaticPropertyDescriptor(comments.associatedNodePath);
+          if (staticPropertyDescriptor) {
+            return staticPropertyDescriptor.propertyName;
+          }
+          break;
         case 'VariableDeclaration':
           if (node.declarations.length !== 1) {
             throw new Error('Unable to deal with a multi-variable declaration.');
           }
           return node.declarations[0].id.name;
-        default:
-          throw new Error(`Unable to derive declaration name from a '${node.type}'.`);
       }
+      throw new Error(`Unable to derive declaration name from a '${node.type}'.`);
     }
 
     function typeFromPath(path: any): ProgramTypeNode {
@@ -224,9 +258,22 @@ export function extract(source: string): Declaration[] {
       }
     }
 
+    function getStaticPropertyDescriptor(path: any): StaticPropertyDescriptor | undefined {
+      const { node } = path;
+      if (node.type === 'ExpressionStatement'
+        && path.parent.node.type === 'Program'
+        && node.expression.type === 'AssignmentExpression'
+        && node.expression.left.type === 'MemberExpression') {
+        const className = node.expression.left.object.name;
+        const propertyName = node.expression.left.property.name;
+        return { className, propertyName };
+      }
+    }
+
     function parseDeclaration(): Declaration {
       const { typeSpec, identifier, indent } = line as DeclarationLine;
       const declaration: Declaration = {}
+      const staticPropertyDescriptor = getStaticPropertyDescriptor(comments.associatedNodePath);
 
       // A declaration without a name implicitly applies to the next
       // program element. We derive the name based on that.
@@ -241,6 +288,10 @@ export function extract(source: string): Declaration[] {
         if (declaration.type.kind === 'Class') {
           declaration.exported = isIdentifierExported(declaration.name);
         }
+      }
+
+      if (staticPropertyDescriptor) {
+        declaration.staticPropertyOf = staticPropertyDescriptor.className
       }
 
       if (comments.associatedNodePath.value.type === 'MethodDefinition') {

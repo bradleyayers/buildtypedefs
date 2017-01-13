@@ -6,6 +6,8 @@ const { argv } = usage('Usage: $0 [file..]').help();
 
 for (const filePath of argv._) {
   const fileContent = readFileSync(filePath, 'utf8');
-  process.stdout.write(`// ${filePath}\n`);
-  process.stdout.write(compile(fileContent));
+  const compiled = compile(fileContent);
+  if (compiled.length) {
+    process.stdout.write(`// ${filePath}\n${compiled}`);
+  }
 }

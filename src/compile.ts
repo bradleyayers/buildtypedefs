@@ -39,11 +39,14 @@ function renderName(nameDeclaration: Declaration): string {
 }
 
 function renderClass(classDeclaration: Declaration): string {
+  if (classDeclaration.type.kind !== 'Class') return '';
+
   const { name, properties } = classDeclaration;
+  const { staticProperties } = classDeclaration.type;
   const source = [];
   source.push(`export class ${name} {`);
 
-  if (classDeclaration.type.kind === 'Class' && classDeclaration.type.constructorParameters) {
+  if (classDeclaration.type.constructorParameters) {
     source.push('\n  ');
     source.push(renderConstructor(classDeclaration.type.constructorParameters));
   }
@@ -51,8 +54,16 @@ function renderClass(classDeclaration: Declaration): string {
   if (properties) {
     for (const propertyDeclaration of properties) {
       source.push('\n  ');
-      source.push(renderProperty(propertyDeclaration));
-      source.push(';');
+      source.push(`${renderProperty(propertyDeclaration)};`);
+    }
+
+    source.push('\n');
+  }
+
+  if (staticProperties) {
+    for (const propertyDeclaration of staticProperties) {
+      source.push('\n  ');
+      source.push(`static ${renderProperty(propertyDeclaration)};`);
     }
 
     source.push('\n');

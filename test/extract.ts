@@ -720,7 +720,43 @@ describe('extract', () => {
           },
         }
       ]);
-  });
+
+    check('static property of declared class', `
+      // ::-
+      class Foo {}
+
+      // :: number
+      Foo.bar = 1;
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+            staticProperties: [
+              {
+                exported: false,
+                name: 'bar',
+                type: {
+                  kind: 'Name',
+                  name: 'number'
+                },
+                typeSpec: "number"
+              }
+            ],
+          },
+        }
+      ]);
+
+    it('throws an error when a static property is declared for a non-declared container', () => {
+      expect(() => extract(`
+      class Foo {}
+
+      // :: number
+      Foo.bar = 1;
+      `)).to.throw(Error);
+    });
+  })
 
 
   function check(description: string, source: string, expected: Declaration[]) {
