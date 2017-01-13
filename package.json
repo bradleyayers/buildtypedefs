@@ -7,6 +7,7 @@
     "prosemirror-typescript": "bin/prosemirror-typescript.ts"
   },
   "scripts": {
+    "compile": "ts-node ./bin/compile.ts",
     "build": "tsc",
     "test": "mocha",
     "test:watch": "mocha --watch test/ test/getdocs"
@@ -20,8 +21,10 @@
   "devDependencies": {
     "@types/chai": "^3.4.34",
     "@types/mocha": "^2.2.34",
+    "@types/yargs": "^6.5.0",
     "chai": "^3.5.0",
     "glob": "^7.1.1",
-    "mocha": "^3.2.0"
+    "mocha": "^3.2.0",
+    "yargs": "^6.6.0"
   }
 }

@@ -155,7 +155,7 @@ function renderType(type?: TypeNode): string {
     case 'NumberLiteral':
       return `${type.value}`;
     case 'Object':
-      return `{${type.members.map(renderProperty).join(', ')}}`;
+      return `{ ${type.members.map(renderProperty).join(', ')} }`;
     case 'StringLiteral':
       return JSON.stringify(type.value);
     case 'Union':
