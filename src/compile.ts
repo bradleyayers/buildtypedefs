@@ -5,21 +5,23 @@ export function compile(javascriptSource: string): string {
   const exportedDeclarations = [];
 
   for (const declaration of extract(javascriptSource)) {
-    switch (declaration.type.kind) {
-      case 'Class':
-        exportedDeclarations.push(renderClass(declaration));
-        break;
-      case 'Interface':
-        exportedDeclarations.push(renderInterface(declaration));
-        break;
-      case 'Function':
-        exportedDeclarations.push(renderFunction(declaration));
-        break;
-      case 'Name':
-        exportedDeclarations.push(renderName(declaration));
-        break;
-      default:
-        throw new Error(`Unable to render declaration '${declaration.type.kind}'.`);
+    if (declaration.exported) {
+      switch (declaration.type.kind) {
+        case 'Class':
+          exportedDeclarations.push(renderClass(declaration));
+          break;
+        case 'Interface':
+          exportedDeclarations.push(renderInterface(declaration));
+          break;
+        case 'Function':
+          exportedDeclarations.push(renderFunction(declaration));
+          break;
+        case 'Name':
+          exportedDeclarations.push(renderName(declaration));
+          break;
+        default:
+          throw new Error(`Unable to render declaration '${declaration.type.kind}'.`);
+      }
     }
   }
 
@@ -129,18 +131,22 @@ function renderType(type?: TypeNode): string {
     case 'Array':
       return `${renderType(type.type)}[]`;
     case 'Name':
+      const name = isIdentifier(type.name)
+        ? type.name
+        : type.name.replace('.', '_');
       if (!isIdentifier(type.name)) {
-        throw new Error(`Unable to render '${type.name}' as an identifier.`);
-      }
-      if (type.parameters && type.parameters.length) {
-        return `${type.name}<${type.parameters.map(renderType).join(', ')}>`
+        console.log(`Unable to render '${type.name}' as an identifier, using '${name}' instead.`);
       }
 
-      switch (type.name) {
+      if (type.parameters && type.parameters.length) {
+        return `${name}<${type.parameters.map(renderType).join(', ')}>`
+      }
+
+      switch (name) {
         case 'bool':
           return 'boolean';
         default:
-          return type.name;
+          return name;
       }
     case 'Function':
       return `(${renderParameters(type.parameters)}) => ${renderType(type.returnType)}`;

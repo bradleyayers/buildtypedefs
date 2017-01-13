@@ -4,83 +4,6 @@ import * as j from 'jscodeshift';
 import { extractMethod, extractProperty, extract, Declaration } from '../src/extract';
 import { SpecKind, MethodSpec, PropertySpec } from '../src/types';
 
-describe('extractMethod', () => {
-  function testExtractMethod(source: string, extracted: MethodSpec) {
-    const comment = j(source).find(j.Comment).paths()[0];
-    expect(extractMethod(comment)).to.deep.equal(extracted);
-  }
-
-  it('extracts class and method name and removes spec " : " prefix', () => {
-    testExtractMethod(`
-    class Foo {
-      // : (?Object) → ContentMatch
-      bar(a, b = 1) {}
-    }
-    `, {
-        kind: SpecKind.Method,
-        name: 'bar',
-        spec: '(?Object) → ContentMatch',
-        parent: 'Foo',
-        paramNames: ['a', 'b'],
-      });
-  });
-
-  it('extracts class and method name and removes spec " :: " prefix', () => {
-    testExtractMethod(`
-    class Foo {
-      // :: (?Object) → ContentMatch
-      bar(a, b = 1) {}
-    }
-    `, {
-        kind: SpecKind.Method,
-        name: 'bar',
-        spec: '(?Object) → ContentMatch',
-        paramNames: ['a', 'b'],
-        parent: 'Foo'
-      });
-  });
-});
-
-describe('extractProperty', () => {
-  function testExtractProperty(source: string, extracted: PropertySpec) {
-    const comment = j(source).find(j.Comment).paths()[0];
-    expect(extractProperty(comment)).to.deep.equal(extracted);
-  }
-
-  it('extracts from a constructor with " : " prefix', () => {
-    testExtractProperty(`
-    class Foo {
-      constructor(schema) {
-        // : Schema
-        this.schema = schema
-      }
-    }
-    `, {
-        kind: SpecKind.Property,
-        name: 'schema',
-        spec: 'Schema',
-        parent: 'Foo'
-      });
-  });
-
-  it('extracts from a constructor with " :: " prefix', () => {
-    testExtractProperty(`
-    class Foo {
-      constructor(schema) {
-        // :: Schema
-        this.schema = schema
-      }
-    }
-    `, {
-        kind: SpecKind.Property,
-        name: 'schema',
-        spec: 'Schema',
-        parent: 'Foo'
-      });
-  });
-});
-
-
 describe('extract', () => {
   describe('with a type', () => {
     check('declaration', `
@@ -213,6 +136,7 @@ describe('extract', () => {
       // a:: interface
       `, [
         {
+          exported: true,
           name: 'a',
           typeSpec: 'interface',
           type: {
@@ -226,6 +150,7 @@ describe('extract', () => {
       // Some documentation
       `, [
         {
+          exported: true,
           name: 'a',
           typeSpec: 'interface',
           type: {
@@ -240,6 +165,7 @@ describe('extract', () => {
       //
       `, [
         {
+          exported: true,
           name: 'a',
           typeSpec: 'interface',
           type: {
@@ -255,6 +181,7 @@ describe('extract', () => {
       // Some documentation
       `, [
         {
+          exported: true,
           name: 'a',
           typeSpec: 'interface',
           type: {
@@ -269,6 +196,7 @@ describe('extract', () => {
       // a:: foo
       `, [
         {
+          exported: true,
           name: 'a',
           typeSpec: 'interface',
           type: {
@@ -283,6 +211,7 @@ describe('extract', () => {
       // b:: interface
       `, [
         {
+          exported: true,
           name: 'a',
           typeSpec: 'interface',
           type: {
@@ -290,6 +219,7 @@ describe('extract', () => {
           }
         },
         {
+          exported: true,
           name: 'b',
           typeSpec: 'interface',
           type: {
@@ -304,6 +234,7 @@ describe('extract', () => {
       //  b:: interface
       `, [
         {
+          exported: true,
           name: 'a',
           typeSpec: 'interface',
           type: {
@@ -338,6 +269,21 @@ describe('extract', () => {
       const foo = {};
       `, [
         {
+          exported: false,
+          name: 'foo',
+          type: {
+            kind: 'Any'
+          },
+        }
+      ]);
+
+    check('exported name', `
+      // ::-
+      const foo = {};
+      exports.foo = foo;
+      `, [
+        {
+          exported: true,
           name: 'foo',
           type: {
             kind: 'Any'
@@ -354,6 +300,7 @@ describe('extract', () => {
       const foo = {};
       `, [
         {
+          exported: true,
           name: 'Bar',
           type: {
             kind: 'Interface'
@@ -371,6 +318,43 @@ describe('extract', () => {
           ]
         },
         {
+          exported: false,
+          name: 'foo',
+          type: {
+            kind: 'Any'
+          },
+        }
+      ]);
+
+    check('exported name and interface', `
+      // Bar:: interface
+      //
+      //   baz:: number
+
+      // ::-
+      const foo = {};
+      exports.foo = foo;
+      `, [
+        {
+          exported: true,
+          name: 'Bar',
+          type: {
+            kind: 'Interface'
+          },
+          typeSpec: 'interface',
+          properties: [
+            {
+              name: 'baz',
+              type: {
+                kind: 'Name',
+                name: 'number'
+              },
+              typeSpec: 'number'
+            }
+          ]
+        },
+        {
+          exported: true,
           name: 'foo',
           type: {
             kind: 'Any'
@@ -385,6 +369,22 @@ describe('extract', () => {
       function foo() {}
       `, [
         {
+          exported: false,
+          name: 'foo',
+          type: {
+            kind: 'Function',
+            parameters: []
+          },
+        }
+      ]);
+
+    check('exported name', `
+      // ::-
+      function foo() {}
+      exports.foo = foo;
+      `, [
+        {
+          exported: true,
           name: 'foo',
           type: {
             kind: 'Function',
@@ -398,6 +398,31 @@ describe('extract', () => {
       function foo() {}
       `, [
         {
+          exported: false,
+          name: 'foo',
+          type: {
+            kind: 'Function',
+            parameters: [
+              {
+                kind: 'FunctionParameter',
+                type: {
+                  kind: 'Name',
+                  name: 'bar'
+                }
+              }
+            ]
+          },
+          typeSpec: '(bar)'
+        }
+      ]);
+
+    check('exported explicit type', `
+      // :: (bar)
+      function foo() {}
+      exports.foo = foo;
+      `, [
+        {
+          exported: true,
           name: 'foo',
           type: {
             kind: 'Function',
@@ -422,6 +447,34 @@ describe('extract', () => {
       class Foo {}
       `, [
         {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+          },
+        }
+      ]);
+
+    check('class name with doc', `
+      // ::- Bar
+      class Foo {}
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+          },
+        }
+      ]);
+
+    check('exported class name', `
+      // ::-
+      class Foo {}
+      exports.Foo = Foo;
+      `, [
+        {
+          exported: true,
           name: 'Foo',
           type: {
             kind: 'Class',
@@ -434,6 +487,21 @@ describe('extract', () => {
       class Foo {}
       `, [
         {
+          exported: false,
+          name: 'a',
+          type: {
+            kind: 'Class',
+          },
+        }
+      ]);
+
+    check('exported explicit name trumps implied name', `
+      // a::-
+      class Foo {}
+      exports.a = Foo;
+      `, [
+        {
+          exported: true,
           name: 'a',
           type: {
             kind: 'Class',
@@ -449,6 +517,7 @@ describe('extract', () => {
       }
       `, [
         {
+          exported: false,
           name: 'Foo',
           type: {
             kind: 'Class',
@@ -489,6 +558,7 @@ describe('extract', () => {
       }
       `, [
         {
+          exported: false,
           name: 'Foo',
           type: {
             kind: 'Class',
@@ -529,6 +599,7 @@ describe('extract', () => {
       }
       `, [
         {
+          exported: false,
           name: 'Foo',
           type: {
             kind: 'Class'
@@ -552,6 +623,7 @@ describe('extract', () => {
       }
       `, [
         {
+          exported: false,
           name: 'Foo',
           type: {
             kind: 'Class'
@@ -578,6 +650,7 @@ describe('extract', () => {
       }
       `, [
         {
+          exported: false,
           name: 'Foo',
           type: {
             kind: 'Class'
@@ -605,6 +678,7 @@ describe('extract', () => {
       }
       `, [
         {
+          exported: false,
           name: 'Foo',
           type: {
             kind: 'Class',
@@ -629,6 +703,7 @@ describe('extract', () => {
       }
       `, [
         {
+          exported: false,
           name: 'Foo',
           type: {
             kind: 'Class',

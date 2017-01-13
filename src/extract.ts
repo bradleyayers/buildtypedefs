@@ -4,54 +4,6 @@ import invariant from './invariant';
 import { closestViaParentPath } from './traverse';
 import { parse, TypeNode, FunctionParameterTypeNode } from './getdocs/parser';
 
-export function extractMethod(commentPath: Path): MethodSpec | undefined {
-  const methodDefinitionPath = closestViaParentPath(commentPath, j.MethodDefinition);
-  if (methodDefinitionPath) {
-    const classDeclarationPath = closestViaParentPath(methodDefinitionPath, j.ClassDeclaration);
-    invariant(!!classDeclarationPath, 'Expected method to be in a class declaration.');
-    const spec = stripCommentSpecPrefix(commentPath.value.value);
-
-    const functionDefinition = methodDefinitionPath.value.value;
-    const paramNames = functionDefinition.params.map(node => {
-      switch (node.type) {
-        case 'Identifier': // foo(bar) {}
-          return node.name;
-        case 'AssignmentPattern': // foo(bar = 1) {}
-          return node.left.name;
-      }
-    });
-
-    return {
-      kind: SpecKind.Method,
-      name: methodDefinitionPath.value.key.name,
-      spec,
-      parent: classDeclarationPath.value.id.name,
-      paramNames,
-    }
-  }
-}
-
-export function extractProperty(commentPath: Path): PropertySpec | undefined {
-  const classDeclaration = closestViaParentPath(commentPath, j.ClassDeclaration);
-  const methodDefinition = closestViaParentPath(commentPath, j.MethodDefinition);
-  const expressionStatement = closestViaParentPath(commentPath, j.ExpressionStatement);
-  if (classDeclaration && methodDefinition && expressionStatement) {
-    const propertyName = j(expressionStatement)
-      .find(j.ThisExpression)
-      .paths()[0]
-      .parent.value // MemberExpression (this.foo)
-      .property.name; // foo
-
-    const spec = stripCommentSpecPrefix(commentPath.value.value);
-    return {
-      kind: SpecKind.Property,
-      name: propertyName,
-      spec,
-      parent: classDeclaration.value.id.name
-    };
-  }
-}
-
 export interface ClassTypeNode {
   kind: 'Class';
   constructorParameters?: FunctionParameterTypeNode[];
@@ -63,21 +15,12 @@ export interface InterfaceTypeNode {
 
 export type ProgramTypeNode = ClassTypeNode | InterfaceTypeNode | TypeNode;
 
-/**
- * Strip off the ' :: ' or ' : ' prefix.
- */
-function stripCommentSpecPrefix(prefixedSpec: string): string {
-  const rawCommentSpec = prefixedSpec;
-  const [matched, prefix, spec] = rawCommentSpec.match(/^( ::? )?(.*)$/);
-  invariant(!!matched, `Invalid comment spec syntax '${prefixedSpec}'.`)
-  return spec;
-}
-
 export interface Declaration {
   name?: string;
   typeSpec?: string;
   type?: ProgramTypeNode;
   properties?: Declaration[];
+  exported?: boolean;
 }
 
 export function extract(source: string): Declaration[] {
@@ -89,7 +32,7 @@ export function extract(source: string): Declaration[] {
     kind: 'DeclarationLine';
     identifier?: string;
     indent: number;
-    typeSpec: string;
+    typeSpec?: string;
   }
 
   interface DocumentationLine {
@@ -112,14 +55,17 @@ export function extract(source: string): Declaration[] {
     let result;
 
     // Test for a DeclarationLine.
-    result = line.match(/^( +)([a-zA-Z\._]*)(::?-? *)(.*)$/);
+    result = line.match(/^( +)([a-zA-Z\._]*)(::?)(-?)( *)(.*)$/);
     if (result) {
-      const [_, indent, identifier, colons, spec] = result;
+      const [_, indent, identifier, colons, dash, whitespace, spec] = result;
       const line: DeclarationLine = {
         kind: 'DeclarationLine',
-        indent: indent.length,
-        typeSpec: spec
+        indent: indent.length
+
       };
+      if (spec && !dash) {
+        line.typeSpec = spec;
+      }
       if (identifier) {
         line.identifier = identifier;
       }
@@ -149,36 +95,19 @@ export function extract(source: string): Declaration[] {
     throw new Error(`Unknown syntax in comment: ${line}`);
   }
 
-  // function parseComments(comments: CommentBlock) {
-  //   const { lines, associatedNodePath } = comments;
-  //   let collectedLines = [];
-  //   let remainingLines = lines.length;
-  //   let lastLineNumber = lines[lines.length - 1].loc.start.line;
-  //   while (remainingLines) {
-  //     while (lines[remainingLines - 1])
-  //   }
-  //   for (let i = lines.length - 1; i >= 0; i--) {
-  //     const line = parseLine(lines[i]);
-
-  //   }
-  // }
+  function isIdentifierExported(identifier: string): boolean {
+    const identifierPaths = program.find(j.Identifier).paths();
+    for (const identifierPath of identifierPaths) {
+      if (identifierPath.node.name === 'exports' &&
+        identifierPath.parent.node.type === 'MemberExpression' &&
+        identifierPath.parent.node.property.name === identifier) {
+          return true;
+        }
+    }
+    return false;
+  }
 
   function parseComments(comments: CommentBlock) {
-    // A comment block ignores empty lines between comments, which isn't what we want.
-    //
-    // For example there might be a comment block:
-    //
-    //     // Foo:: interface
-    //     //
-    //     //   foo:: number
-    //
-    //     // ::-
-    //     class Bar {
-    //       // bar:: string;
-    //     }
-    //
-    // In this case we want Foo and Bar to be considered separately, and we definitely don't
-    // want Foo associated with the class.
     const lines = comments.lines.map(parseLine);
     const end = lines.length;
     let pos = 0;
@@ -194,9 +123,11 @@ export function extract(source: string): Declaration[] {
             const classDeclarations = j(comments.associatedNodePath).closest(j.ClassDeclaration).paths();
             if (classDeclarations.length === 1) {
               const classDeclaration = classDeclarations[0];
+              const name = nameFromPath(classDeclaration)
               parentDeclaration = {
-                name: nameFromPath(classDeclaration),
+                name,
                 type: typeFromPath(classDeclaration),
+                exported: isIdentifierExported(name),
               };
               declarations.push(parentDeclaration);
               nodeToDeclarationMap.push({ path: classDeclaration, declaration: parentDeclaration });
@@ -211,6 +142,20 @@ export function extract(source: string): Declaration[] {
               parentDeclaration.properties.push(declaration);
             }
           } else {
+            switch (declaration.type.kind) {
+              case 'Function':
+              case 'Name':
+              case 'Any':
+              case 'Class':
+                if (comments.associatedNodePath.value.type !== 'Program') {
+                  declaration.exported = isIdentifierExported(declaration.name);
+                }
+                break;
+              case 'Interface':
+                declaration.exported = true;
+              default:
+                console.log(`Unable to determine if a '${declaration.type.kind}' is exported.`)
+            }
             declarations.push(declaration);
           }
           if (comments.associatedNodePath.value.type !== 'Program') {
@@ -274,6 +219,7 @@ export function extract(source: string): Declaration[] {
         case 'VariableDeclaration':
           return { kind: 'Any' };
         default:
+          debugger;
           throw new Error(`Unable to derive declaration type from a '${path.value.type}'.`);
       }
     }
@@ -292,6 +238,9 @@ export function extract(source: string): Declaration[] {
           : parse(declaration.typeSpec);
       } else {
         declaration.type = typeFromPath(comments.associatedNodePath);
+        if (declaration.type.kind === 'Class') {
+          declaration.exported = isIdentifierExported(declaration.name);
+        }
       }
 
       if (comments.associatedNodePath.value.type === 'MethodDefinition') {
@@ -311,6 +260,8 @@ export function extract(source: string): Declaration[] {
             }
           }
         }
+
+        while (line) nextLine();
       }
 
       skipUntil('EmptyLine');
@@ -398,6 +349,21 @@ export function extract(source: string): Declaration[] {
       }
     });
 
+    // A comment block ignores empty lines between comments, which isn't what we want.
+    //
+    // For example there might be a comment block:
+    //
+    //     // Foo:: interface
+    //     //
+    //     //   foo:: number
+    //
+    //     // ::-
+    //     class Bar {
+    //       // bar:: string;
+    //     }
+    //
+    // In this case we want Foo and Bar to be considered separately, and we definitely don't
+    // want Foo associated with the class.
     const lineGroups = [];
 
     function pushLine(line: any) {
@@ -415,7 +381,6 @@ export function extract(source: string): Declaration[] {
 
     commentsPaths.reverse().forEach(commentsPath => {
       const lines = j(commentsPath).find(j.Comment).nodes();
-      debugger;
       startEmptyBlock(commentsPath.parent);
       pushLine(lines[0]);
 
