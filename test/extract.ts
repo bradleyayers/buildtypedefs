@@ -647,6 +647,94 @@ describe('extract', () => {
         }
       ]);
 
+    check('static method of an undeclared class', `
+      class Foo {
+        // :: ()
+        static bar() {}
+      }
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+            staticProperties: [
+              {
+                name: 'bar',
+                type: {
+                  kind: 'Function',
+                  parameters: []
+                },
+                typeSpec: '()',
+              }
+            ]
+          }
+        }
+      ]);
+
+    check('property via getdocs path', `
+      class Foo {
+        // :: number #path=Foo.prototype.text
+        // For text nodes, this contains the node's text content.
+      }
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+          },
+          properties: [
+            {
+              name: 'text',
+              type: {
+                kind: 'Name',
+                name: 'number'
+              },
+              typeSpec: 'number',
+            }
+          ]
+        }
+      ]);
+
+    check('static method and property via getdocs path', `
+      class Foo {
+        // :: ()
+        static bar() {}
+
+        // :: number #path=Foo.prototype.text
+        // For text nodes, this contains the node's text content.
+      }
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+            staticProperties: [
+              {
+                name: 'bar',
+                type: {
+                  kind: 'Function',
+                  parameters: []
+                },
+                typeSpec: '()',
+              }
+            ]
+          },
+          properties: [
+            {
+              name: 'text',
+              type: {
+                kind: 'Name',
+                name: 'number'
+              },
+              typeSpec: 'number',
+            }
+          ]
+        }
+      ]);
+
     check('constructor initialised property of an undeclared class', `
       class Foo {
         constructor(foo) {

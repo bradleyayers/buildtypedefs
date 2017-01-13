@@ -69,22 +69,25 @@ export function extract(source: string): Declaration[] {
     let result;
 
     // Test for a DeclarationLine.
-    result = line.match(/^( +)([a-zA-Z\._]*)(;;|::?)(-?)( *)(.*)$/);
+    result = line.match(/^( +)([a-zA-Z\._]*)(::-|::|:|;;)(?: *)([^#]*)(?: #path=\w+\.prototype\.)?(\w+)?$/);
     if (result) {
-      const [_, indent, identifier, colons, dash, whitespace, spec] = result;
+      const [_, indent, identifier, separator, spec, pathIdentifier] = result;
 
-      // guard against // includes:
-      if (!(identifier && colons === ':')) {
+      // guard against `// includes:`
+      const isDocumentation = (identifier && separator === ':');
+
+      if (!isDocumentation) {
         const line: DeclarationLine = {
           kind: 'DeclarationLine',
           indent: indent.length
-
         };
-        if (spec && !dash) {
+        const isSpecSeparator = separator === ':' || separator === '::';
+        if (spec && isSpecSeparator) {
           line.typeSpec = spec;
         }
-        if (identifier) {
-          line.identifier = identifier;
+        const name = identifier || pathIdentifier;
+        if (name) {
+          line.identifier = name;
         }
         return line;
       }
@@ -135,6 +138,7 @@ export function extract(source: string): Declaration[] {
       switch (line.kind) {
         case 'DeclarationLine':
           const declarationLine = line;
+          debugger;
           const declaration = parseDeclaration();
           let parentDeclaration = findParentDeclaration(comments.associatedNodePath);
           if (!parentDeclaration) {
@@ -155,9 +159,12 @@ export function extract(source: string): Declaration[] {
           if (parentDeclaration) {
             if (declaration.type.kind === 'Function' && declaration.name === 'constructor' && parentDeclaration.type.kind === 'Class') {
               parentDeclaration.type.constructorParameters = declaration.type.parameters;
+            } else if (declaration.type.kind === 'Function' && parentDeclaration.type.kind === 'Class' && comments.associatedNodePath.node.static) {
+              parentDeclaration.type.staticProperties = parentDeclaration.type.staticProperties || [];
+              parentDeclaration.type.staticProperties.splice(0, 0, declaration);
             } else {
               parentDeclaration.properties = parentDeclaration.properties || [];
-              parentDeclaration.properties.push(declaration);
+              parentDeclaration.properties.splice(0, 0, declaration);
             }
           } else {
             switch (declaration.type.kind) {
@@ -242,6 +249,7 @@ export function extract(source: string): Declaration[] {
           }
           return node.declarations[0].id.name;
       }
+      debugger;
       throw new Error(`Unable to derive declaration name from a '${node.type}'.`);
     }
 
@@ -439,15 +447,23 @@ export function extract(source: string): Declaration[] {
       startEmptyBlock(commentsPath.parent);
       pushLine(lines[0]);
 
+      let marked = false;
+
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         if (lastLineLocStartLine() !== line.loc.start.line - 1) {
+          if (line.loc.start.line > commentsPath.node.loc.end.line) {
+            marked = true;
+            lineGroups[lineGroups.length - 1].associatedNodePath = commentsPath.parentPath;
+          }
           startEmptyBlock(commentsPath.parent);
         }
         pushLine(line);
       }
 
-      lineGroups[lineGroups.length - 1].associatedNodePath = commentsPath.parentPath;
+      if (!marked) {
+        lineGroups[lineGroups.length - 1].associatedNodePath = commentsPath.parentPath;
+      }
     });
 
     return lineGroups.map((lineGroup, index) => {
