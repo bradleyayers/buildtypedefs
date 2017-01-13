@@ -177,7 +177,13 @@ function renderType(type?: TypeNode): string {
     case 'StringLiteral':
       return JSON.stringify(type.value);
     case 'Union':
-      return type.types.map(renderType).join(' | ');
+      return type.types.map(type => {
+        switch (type.kind) {
+          case 'Function':
+            return `(${renderType(type)})`;
+          default:
+            return renderType(type);
+        }).join(' | ');
     default:
       throw new Error(`Unable to render type '${type.kind}'.`);
   }
