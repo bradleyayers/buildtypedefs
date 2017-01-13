@@ -146,7 +146,7 @@ function renderType(type?: TypeNode): string {
         ? type.name
         : type.name.replace('.', '_');
       if (!isIdentifier(type.name)) {
-        console.log(`Unable to render '${type.name}' as an identifier, using '${name}' instead.`);
+        console.warn(`Unable to render '${type.name}' as an identifier, using '${name}' instead.`);
       }
 
       if (type.parameters && type.parameters.length) {

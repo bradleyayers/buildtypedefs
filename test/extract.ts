@@ -5,6 +5,12 @@ import { extractMethod, extractProperty, extract, Declaration } from '../src/ext
 import { SpecKind, MethodSpec, PropertySpec } from '../src/types';
 
 describe('extract', () => {
+  describe('ambiugity', () => {
+    check('declaration', `
+      // includes:
+      `, []);
+  });
+
   describe('with a type', () => {
     check('declaration', `
       // a:: foo

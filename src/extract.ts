@@ -69,21 +69,25 @@ export function extract(source: string): Declaration[] {
     let result;
 
     // Test for a DeclarationLine.
-    result = line.match(/^( +)([a-zA-Z\._]*)(::?)(-?)( *)(.*)$/);
+    result = line.match(/^( +)([a-zA-Z\._]*)(;;|::?)(-?)( *)(.*)$/);
     if (result) {
       const [_, indent, identifier, colons, dash, whitespace, spec] = result;
-      const line: DeclarationLine = {
-        kind: 'DeclarationLine',
-        indent: indent.length
 
-      };
-      if (spec && !dash) {
-        line.typeSpec = spec;
+      // guard against // includes:
+      if (!(identifier && colons === ':')) {
+        const line: DeclarationLine = {
+          kind: 'DeclarationLine',
+          indent: indent.length
+
+        };
+        if (spec && !dash) {
+          line.typeSpec = spec;
+        }
+        if (identifier) {
+          line.identifier = identifier;
+        }
+        return line;
       }
-      if (identifier) {
-        line.identifier = identifier;
-      }
-      return line;
     }
 
     // Test for a DocumentationLine.
@@ -169,9 +173,9 @@ export function extract(source: string): Declaration[] {
                   if (existingDeclaration.staticPropertyOf === declaration.name) {
                     if (declaration.type.kind === 'Class') {
                       declaration.type.staticProperties = declaration.type.staticProperties || [];
-                       declaration.type.staticProperties.push(existingDeclaration);
-                       delete existingDeclaration.staticPropertyOf;
-                       declarations.splice(i, 1);
+                      declaration.type.staticProperties.push(existingDeclaration);
+                      delete existingDeclaration.staticPropertyOf;
+                      declarations.splice(i, 1);
                     }
                   }
                 }
@@ -179,7 +183,7 @@ export function extract(source: string): Declaration[] {
               case 'Interface':
                 declaration.exported = true;
               default:
-                console.log(`Unable to determine if a '${declaration.type.kind}' is exported.`)
+                console.warn(`Unable to determine if a '${declaration.type.kind}' is exported.`)
             }
             declarations.push(declaration);
           }
@@ -254,7 +258,7 @@ export function extract(source: string): Declaration[] {
           return { kind: 'Any' };
         default:
           debugger;
-          throw new Error(`Unable to derive declaration type from a '${path.value.type}'.`);
+          throw new Error(`Unable to derive declaration type from a '${path.value.type}':\n${j(path).toSource()}`);
       }
     }
 
