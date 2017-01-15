@@ -153,9 +153,8 @@ export function parse(text: string) {
     if (token === SyntaxKind.DotDotDotToken) {
       rest = true;
       nextToken();
-      name = parseIdentifier();
-      skipExpected(SyntaxKind.ColonToken);
-    } else if (scanner.lookAhead(isNamedFunctionParameterStart)) {
+    }
+    if (scanner.lookAhead(isNamedFunctionParameterStart)) {
       name = parseIdentifier();
       skipExpected(SyntaxKind.ColonToken);
     }

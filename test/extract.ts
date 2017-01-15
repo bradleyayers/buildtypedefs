@@ -424,6 +424,42 @@ describe('extract', () => {
           ]
         }
       ]);
+
+    check('exported explicit type with and without parameter name', `
+      // :: Object
+      const foo = {};
+      exports.foo = foo;
+
+      // :: (aType)
+      foo.prop = function (a) {}
+      `, [
+        {
+          exported: true,
+          name: 'foo',
+          type: {
+            kind: 'Object',
+            members: [
+              {
+                kind: 'ObjectMember',
+                name: 'prop',
+                type: {
+                  kind: 'Function',
+                  parameters: [
+                    {
+                      kind: 'FunctionParameter',
+                      name: 'a',
+                      type: {
+                        kind: 'Name',
+                        name: 'aType'
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]);
   });
 
   describe('for a function', () => {

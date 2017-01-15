@@ -47,7 +47,15 @@ export function compile(javascriptSource: string): string {
     const source = [];
 
     if (nameDeclaration.type) {
-      source.push(`export const ${nameDeclaration.name}: ${renderType(nameDeclaration.type)};`);
+      source.push(`export const ${nameDeclaration.name}: `);
+      switch (nameDeclaration.type.kind) {
+        case 'Object':
+          source.push(renderObject(nameDeclaration.type, true));
+          break;
+        default:
+          source.push(renderType(nameDeclaration.type));
+      }
+      source.push(`;`);
     }
 
     return source.join('');

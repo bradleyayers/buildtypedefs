@@ -156,6 +156,20 @@ describe('parser', () => {
     ]
   });
 
+  check('(...b)', 'a function with one unnamed rest parameter', {
+    kind: 'Function',
+    parameters: [
+      {
+        kind: 'FunctionParameter',
+        rest: true,
+        type: {
+          kind: 'Name',
+          name: 'b'
+        }
+      }
+    ]
+  });
+
   check('(a) → b', 'a function with one parameter and a return value', {
     kind: 'Function',
     parameters: [
@@ -217,6 +231,35 @@ describe('parser', () => {
     returnType: {
       kind: 'Name',
       name: 'c'
+    }
+  });
+
+  check('(a) → (b) → c', 'a function that returns a function that returns a name multiple parameters', {
+    kind: 'Function',
+    parameters: [
+      {
+        kind: 'FunctionParameter',
+        type: {
+          kind: 'Name',
+          name: 'a'
+        }
+      }
+    ],
+    returnType: {
+      kind: 'Function',
+      parameters: [
+        {
+          kind: 'FunctionParameter',
+          type: {
+            kind: 'Name',
+            name: 'b'
+          }
+        }
+      ],
+      returnType: {
+        kind: 'Name',
+        name: 'c'
+      }
     }
   });
 

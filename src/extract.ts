@@ -406,6 +406,12 @@ export function extract(source: string): Declaration[] {
           case 'FunctionDeclaration':
             fromTheCodeParams = node.params;
             break;
+          case 'ExpressionStatement':
+            if (node.expression.type === 'AssignmentExpression'
+            && node.expression.right.type === 'FunctionExpression') {
+              fromTheCodeParams = node.expression.right.params;
+              break;
+            }
           default:
             console.warn(`Unable to find function parameters from a '${node.type}', falling back to '_n'.`);
         }
