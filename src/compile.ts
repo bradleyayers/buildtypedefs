@@ -204,14 +204,12 @@ function renderType(type?: TypeNode): string {
 }
 
 function renderParameters(parameters: FunctionParameterTypeNode[]): string {
-  return parameters.map(param => {
+  return parameters.map((param, i) => {
     const parts = [];
     if (param.rest) {
       parts.push('...');
     }
-    if (param.name) {
-      parts.push(`${param.name}: `);
-    }
+    parts.push(`${param.name || `_${i}`}: `);
     parts.push(renderType(param.type));
     return parts.join('');
   }).join(', ');

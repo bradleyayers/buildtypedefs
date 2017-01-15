@@ -10,7 +10,7 @@ export interface Foo {
   i: number | string;
   j: { a: number };
   k: { a: number, b: string };
-  l?: (Node) => Fragment;
+  l?: (_0: Node) => Fragment;
   m: any;
   n: any;
   o: "foo";
