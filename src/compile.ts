@@ -191,7 +191,8 @@ function renderType(type?: TypeNode): string {
             return `(${renderType(type)})`;
           default:
             return renderType(type);
-        }).join(' | ');
+        }
+      }).join(' | ');
     default:
       throw new Error(`Unable to render type '${type.kind}'.`);
   }

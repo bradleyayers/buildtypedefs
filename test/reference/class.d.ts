@@ -6,5 +6,5 @@ export class Foo {
   c: { [key: string]: number };
 
   static bar: number;
-  static baz: (number) => void;
+  static baz: (_0: number) => void;
 }

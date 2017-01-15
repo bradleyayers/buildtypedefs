@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import 'mocha';
 import * as j from 'jscodeshift';
-import { extractMethod, extractProperty, extract, Declaration } from '../src/extract';
+import { extract, Declaration } from '../src/extract';
 import { SpecKind, MethodSpec, PropertySpec } from '../src/types';
 
 describe('extract', () => {
@@ -399,9 +399,9 @@ describe('extract', () => {
         }
       ]);
 
-    check('explicit type', `
+    check('unexported explicit type', `
       // :: (bar)
-      function foo() {}
+      function foo(a) {}
       `, [
         {
           exported: false,
@@ -411,6 +411,7 @@ describe('extract', () => {
             parameters: [
               {
                 kind: 'FunctionParameter',
+                name: 'a',
                 type: {
                   kind: 'Name',
                   name: 'bar'
@@ -424,6 +425,31 @@ describe('extract', () => {
 
     check('exported explicit type', `
       // :: (bar)
+      function foo(a) {}
+      exports.foo = foo;
+      `, [
+        {
+          exported: true,
+          name: 'foo',
+          type: {
+            kind: 'Function',
+            parameters: [
+              {
+                kind: 'FunctionParameter',
+                name: 'a',
+                type: {
+                  kind: 'Name',
+                  name: 'bar'
+                }
+              }
+            ]
+          },
+          typeSpec: '(bar)'
+        }
+      ]);
+
+    check('exported explicit type without parameter name', `
+      // :: (bar)
       function foo() {}
       exports.foo = foo;
       `, [
@@ -435,6 +461,7 @@ describe('extract', () => {
             parameters: [
               {
                 kind: 'FunctionParameter',
+                name: '_0',
                 type: {
                   kind: 'Name',
                   name: 'bar'
@@ -443,6 +470,39 @@ describe('extract', () => {
             ]
           },
           typeSpec: '(bar)'
+        }
+      ]);
+
+    check('exported explicit type with and without parameter name', `
+      // :: (bar, baz)
+      function foo(a) {}
+      exports.foo = foo;
+      `, [
+        {
+          exported: true,
+          name: 'foo',
+          type: {
+            kind: 'Function',
+            parameters: [
+              {
+                kind: 'FunctionParameter',
+                name: 'a',
+                type: {
+                  kind: 'Name',
+                  name: 'bar'
+                }
+              },
+              {
+                kind: 'FunctionParameter',
+                name: '_1',
+                type: {
+                  kind: 'Name',
+                  name: 'baz'
+                }
+              }
+            ]
+          },
+          typeSpec: '(bar, baz)'
         }
       ]);
   });

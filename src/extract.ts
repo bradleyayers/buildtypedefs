@@ -317,24 +317,65 @@ export function extract(source: string): Declaration[] {
         declaration.staticPropertyOf = staticPropertyDescriptor.className
       }
 
-      if (comments.associatedNodePath.value.type === 'MethodDefinition') {
-        if (declaration.type.kind === 'Function') {
-          const functionDefinition = comments.associatedNodePath.value.value;
-          const paramNames = functionDefinition.params.map(node => {
-            switch (node.type) {
-              case 'Identifier': // foo(bar) {}
-                return node.name;
-              case 'AssignmentPattern': // foo(bar = 1) {}
-                return node.left.name;
-            }
-          });
-          for (let i = 0; i < declaration.type.parameters.length; i++) {
-            if (!declaration.type.parameters[i].name) {
-              declaration.type.parameters[i].name = paramNames[i];
-            }
-          }
+      if (declaration.type.kind === 'Function') {
+        // getdocs doesn't include parameter names for functions. Rather those are declared
+        // in the source itself, so at this point we know we're dealing with a function, but
+        // need to try and pull parameter names from the function node.
+        //
+        // To complicate the matter we might be dealing with a class method, or a function
+        // declaration.
+        const node = comments.associatedNodePath.value;
+
+        // It's not always possible to find function parameter names, e.g.
+        //
+        //     // :: (string)
+        //     Foo.bar = 1;
+        //
+        // In that example there is no function in the code to actually pull
+        // parameter names from. It's not clear if it's an error, so we log
+        // a warning and generate some parameter names.
+        //
+        // It's also possible for more parameters to be declared in the type
+        // than in the code, so by default we start with a set of parameters
+        // that are just numbered, i.e. _0, _1, _2. Then we check the code
+        // to see if we can find better names.
+        const params = declaration.type.parameters.map((_, i) => ({
+          type: 'Identifier',
+          name: `_${i}`
+        }));
+        debugger;
+
+        let fromTheCodeParams = [];
+        switch (node.type) {
+          case 'MethodDefinition':
+            fromTheCodeParams = node.value.params;
+            break;
+          case 'FunctionDeclaration':
+            fromTheCodeParams = node.params;
+            break;
+          default:
+            console.warn(`Unable to find function parameters from a '${node.type}', falling back to '_n'.`);
         }
 
+        // Overlay the *real* params, to replace our placeholders.
+        params.splice(0, fromTheCodeParams.length, ...fromTheCodeParams);
+
+        const paramNames = params.map(node => {
+          switch (node.type) {
+            case 'Identifier': // foo(bar) {}
+              return node.name;
+            case 'AssignmentPattern': // foo(bar = 1) {}
+              return node.left.name;
+          }
+        });
+        for (let i = 0; i < declaration.type.parameters.length; i++) {
+          if (!declaration.type.parameters[i].name) {
+            declaration.type.parameters[i].name = paramNames[i];
+          }
+        }
+      }
+
+      if (comments.associatedNodePath.value.type === 'MethodDefinition') {
         while (line) nextLine();
       }
 
@@ -491,4 +532,3 @@ export function extract(source: string): Declaration[] {
     associatedNodePath?: any;
   }
 }
-

@@ -4,5 +4,5 @@ export class Foo {
   a: number;
 
   static bar: number;
-  static baz: (number) => void;
+  static baz: (_0: number) => void;
 }
