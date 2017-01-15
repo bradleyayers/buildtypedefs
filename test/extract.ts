@@ -5,6 +5,18 @@ import { extract, Declaration } from '../src/extract';
 import { SpecKind, MethodSpec, PropertySpec } from '../src/types';
 
 describe('extract', () => {
+  function check(description: string, source: string, expected: Declaration[]) {
+    it(description, () => {
+      expect(extract(source)).to.deep.equal(expected);
+    });
+  }
+
+  (check as any).only = function check(description: string, source: string, expected: Declaration[]) {
+    it.only(description, () => {
+      expect(extract(source)).to.deep.equal(expected);
+    });
+  }
+
   describe('ambiugity', () => {
     check('declaration', `
       // includes:
@@ -431,7 +443,10 @@ describe('extract', () => {
       exports.foo = foo;
 
       // :: (aType)
-      foo.prop = function (a) {}
+      foo.prop1 = function (a) {}
+
+      // :: (...bType)
+      foo.prop2 = function (...b) {}
       `, [
         {
           exported: true,
@@ -441,7 +456,7 @@ describe('extract', () => {
             members: [
               {
                 kind: 'ObjectMember',
-                name: 'prop',
+                name: 'prop1',
                 type: {
                   kind: 'Function',
                   parameters: [
@@ -451,6 +466,24 @@ describe('extract', () => {
                       type: {
                         kind: 'Name',
                         name: 'aType'
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                kind: 'ObjectMember',
+                name: 'prop2',
+                type: {
+                  kind: 'Function',
+                  parameters: [
+                    {
+                      kind: 'FunctionParameter',
+                      rest: true,
+                      name: 'b',
+                      type: {
+                        kind: 'Name',
+                        name: 'bType'
                       }
                     }
                   ]
@@ -1146,11 +1179,4 @@ describe('extract', () => {
       `)).to.throw(Error);
     });
   })
-
-
-  function check(description: string, source: string, expected: Declaration[]) {
-    it(description, () => {
-      expect(extract(source)).to.deep.equal(expected);
-    });
-  }
 });

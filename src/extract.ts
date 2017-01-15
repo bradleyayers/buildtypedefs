@@ -425,6 +425,10 @@ export function extract(source: string): Declaration[] {
               return node.name;
             case 'AssignmentPattern': // foo(bar = 1) {}
               return node.left.name;
+            case 'RestElement':
+              return node.argument.name;
+            default:
+              throw new Error(`Unable to find name from parameter node '${node.type}'.`);
           }
         });
         for (let i = 0; i < declaration.type.parameters.length; i++) {
