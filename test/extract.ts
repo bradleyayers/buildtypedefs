@@ -316,6 +316,44 @@ describe('extract', () => {
         }
       ]);
 
+    check('exported object with separate object member declarations', `
+      // :: Object
+      const foo = {};
+      exports.foo = foo;
+
+      // :: number
+      foo.num = 1;
+
+      // :: string
+      foo.str = "s";
+      `, [
+        {
+          exported: true,
+          name: 'foo',
+          type: {
+            kind: 'Object',
+            members: [
+              {
+                kind: 'ObjectMember',
+                name: 'num',
+                type: {
+                  kind: 'Name',
+                  name: 'number'
+                }
+              },
+              {
+                kind: 'ObjectMember',
+                name: 'str',
+                type: {
+                  kind: 'Name',
+                  name: 'string'
+                }
+              }
+            ]
+          },
+        }
+      ]);
+
     check('name and interface', `
       // Bar:: interface
       //

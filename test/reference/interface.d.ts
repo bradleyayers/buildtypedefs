@@ -8,8 +8,13 @@ export interface Foo {
   g: (a: number) => number;
   h: (a: number, ...b: number[]) => number;
   i: number | string;
-  j: { a: number };
-  k: { a: number, b: string };
+  j: {
+    a: number
+  };
+  k: {
+    a: number,
+    b: string
+  };
   l?: (_0: Node) => Fragment;
   m: any;
   n: any;

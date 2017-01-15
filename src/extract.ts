@@ -33,7 +33,7 @@ export interface Declaration {
 
 export function extract(source: string): Declaration[] {
   const declarations: Declaration[] = [];
-  const nodeToDeclarationMap = [] as { path: any; declaration: Declaration }[];
+  const nodeToDeclarationMap = [] as { nodePath: any; nodeDeclaration: Declaration }[];
   const program = j(source);
 
   interface DeclarationLine {
@@ -58,8 +58,41 @@ export function extract(source: string): Declaration[] {
 
   gatherComments().forEach(parseComments);
 
-  for (const declaration of declarations) {
+  loop: for (let i = declarations.length - 1; i >= 0; i--) {
+    const declaration = declarations[i];
     if (declaration.staticPropertyOf) {
+      for (const { nodePath, nodeDeclaration } of nodeToDeclarationMap) {
+        if (nodePath.node.type === 'ExpressionStatement'
+            && nodePath.node.expression.type === 'AssignmentExpression'
+            && nodePath.node.expression.left.object.type === 'Identifier'
+            && nodePath.parent.node.type === 'Program') {
+          const objectName = nodePath.node.expression.left.object.name;
+          for (const existingDeclaration of declarations) {
+            if (existingDeclaration.name === objectName) {
+              if (existingDeclaration.type.kind === 'Name' && existingDeclaration.type.name === 'Object') {
+                console.warn(`Found explicit ObjectMember: converting ${existingDeclaration.name}.${objectName} from type '${existingDeclaration.type.kind}' to 'Object'.`);
+                existingDeclaration.type = {
+                  kind: 'Object',
+                  members: []
+                };
+                delete existingDeclaration.typeSpec;
+              }
+
+              if (existingDeclaration.type.kind !== 'Object') {
+                console.warn(`Found parent declaration candidate for ${nodeDeclaration.name}, by the type was '${existingDeclaration.type.kind}' rather than 'Object'.`);
+              } else {
+                existingDeclaration.type.members.push({
+                  kind: 'ObjectMember',
+                  name: declaration.name,
+                  type: declaration.type
+                } as ObjectMemberTypeNode);
+                declarations.splice(i, 1);
+              }
+              continue loop;
+            }
+          }
+        }
+      }
       throw new Error(`Unable to find a container '${declaration.staticPropertyOf}' for static property '${declaration.name}'.`)
     }
   }
@@ -146,7 +179,6 @@ export function extract(source: string): Declaration[] {
         case 'DeclarationLine':
           const declarationLine = line;
           const declaration = parseDeclaration();
-          debugger;
           let parentDeclaration = findDeclaredParent(comments.associatedNodePath);
           if (!parentDeclaration) {
             const classDeclarations = j(comments.associatedNodePath).closest(j.ClassDeclaration).paths();
@@ -164,7 +196,7 @@ export function extract(source: string): Declaration[] {
                 }
               }
               pushDeclaration(parentDeclaration);
-              nodeToDeclarationMap.push({ path: classDeclaration, declaration: parentDeclaration });
+              nodeToDeclarationMap.push({ nodePath: classDeclaration, nodeDeclaration: parentDeclaration });
             }
           }
 
@@ -226,8 +258,8 @@ export function extract(source: string): Declaration[] {
           }
           if (comments.associatedNodePath.value.type !== 'Program') {
             nodeToDeclarationMap.push({
-              path: comments.associatedNodePath,
-              declaration
+              nodePath: comments.associatedNodePath,
+              nodeDeclaration: declaration
             });
           }
           break;
@@ -239,11 +271,11 @@ export function extract(source: string): Declaration[] {
     }
 
     function findDeclaredParent(p: any): Declaration | undefined {
-      for (const { path, declaration } of nodeToDeclarationMap) {
+      for (const { nodePath, nodeDeclaration } of nodeToDeclarationMap) {
         let parent = p;
         while (parent = parent.parentPath) {
-          if (parent === path) {
-            return declaration;
+          if (parent === nodePath) {
+            return nodeDeclaration;
           }
         }
       }
