@@ -14,5 +14,5 @@ export interface Foo {
   m: any;
   n: any;
   o: "foo";
-  p: 5;
+  p: number;
 }

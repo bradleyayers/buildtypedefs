@@ -64,7 +64,7 @@ export function extract(source: string): Declaration[] {
     }
   }
 
-  return declarations;
+  return declarations.reverse();
 
   function parseLine(line: string): Line {
     let result;
@@ -135,6 +135,12 @@ export function extract(source: string): Declaration[] {
     let pos = 0;
     let line = lines[pos];
 
+    const declarationsInsertionPoint = declarations.length - 1;
+    function pushDeclaration(declaration: Declaration) {
+      // declarations.splice(declarationsInsertionPoint, 0, declaration);
+      declarations.push(declaration);
+    }
+
     while (line) {
       switch (line.kind) {
         case 'DeclarationLine':
@@ -156,7 +162,7 @@ export function extract(source: string): Declaration[] {
                   parentDeclaration.type.superClass = classDeclaration.node.superClass.name;
                 }
               }
-              declarations.push(parentDeclaration);
+              pushDeclaration(parentDeclaration);
               nodeToDeclarationMap.push({ path: classDeclaration, declaration: parentDeclaration });
             }
           }
@@ -172,37 +178,30 @@ export function extract(source: string): Declaration[] {
               parentDeclaration.properties.splice(0, 0, declaration);
             }
           } else {
-            switch (declaration.type.kind) {
-              case 'Function':
-              case 'Name':
-              case 'Any':
-              case 'Class':
-                if (comments.associatedNodePath.value.type !== 'Program') {
-                  declaration.exported = isIdentifierExported(declaration.name);
+            if (declaration.type.kind === 'Interface') {
+              declaration.exported = true;
+            } else {
+              if (comments.associatedNodePath.value.type !== 'Program') {
+                declaration.exported = isIdentifierExported(declaration.name);
+              }
+              if (comments.associatedNodePath.node.superClass) {
+                if (declaration.type.kind === 'Class') {
+                  declaration.type.superClass = comments.associatedNodePath.node.superClass.name;
                 }
-                if (comments.associatedNodePath.node.superClass) {
+              }
+              for (let i = declarations.length - 1; i >= 0; i--) {
+                const existingDeclaration = declarations[i];
+                if (existingDeclaration.staticPropertyOf === declaration.name) {
                   if (declaration.type.kind === 'Class') {
-                    declaration.type.superClass = comments.associatedNodePath.node.superClass.name;
+                    declaration.type.staticProperties = declaration.type.staticProperties || [];
+                    declaration.type.staticProperties.push(existingDeclaration);
+                    delete existingDeclaration.staticPropertyOf;
+                    declarations.splice(i, 1);
                   }
                 }
-                for (let i = declarations.length - 1; i >= 0; i--) {
-                  const existingDeclaration = declarations[i];
-                  if (existingDeclaration.staticPropertyOf === declaration.name) {
-                    if (declaration.type.kind === 'Class') {
-                      declaration.type.staticProperties = declaration.type.staticProperties || [];
-                      declaration.type.staticProperties.push(existingDeclaration);
-                      delete existingDeclaration.staticPropertyOf;
-                      declarations.splice(i, 1);
-                    }
-                  }
-                }
-                break;
-              case 'Interface':
-                declaration.exported = true;
-              default:
-                console.warn(`Unable to determine if a '${declaration.type.kind}' is exported.`)
+              }
             }
-            declarations.push(declaration);
+            pushDeclaration(declaration);
           }
           if (comments.associatedNodePath.value.type !== 'Program') {
             nodeToDeclarationMap.push({

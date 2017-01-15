@@ -218,7 +218,7 @@ describe('extract', () => {
       `, [
         {
           exported: true,
-          name: 'a',
+          name: 'b',
           typeSpec: 'interface',
           type: {
             kind: 'Interface'
@@ -226,7 +226,7 @@ describe('extract', () => {
         },
         {
           exported: true,
-          name: 'b',
+          name: 'a',
           typeSpec: 'interface',
           type: {
             kind: 'Interface'
@@ -297,6 +297,25 @@ describe('extract', () => {
         }
       ]);
 
+    check('exported name explicit array type', `
+      // :: [Foo]
+      const foo = {};
+      exports.foo = foo;
+      `, [
+        {
+          exported: true,
+          name: 'foo',
+          type: {
+            kind: 'Array',
+            type: {
+              kind: 'Name',
+              name: 'Foo'
+            }
+          },
+          typeSpec: '[Foo]'
+        }
+      ]);
+
     check('name and interface', `
       // Bar:: interface
       //
@@ -305,6 +324,13 @@ describe('extract', () => {
       // ::-
       const foo = {};
       `, [
+        {
+          exported: false,
+          name: 'foo',
+          type: {
+            kind: 'Any'
+          },
+        },
         {
           exported: true,
           name: 'Bar',
@@ -322,13 +348,6 @@ describe('extract', () => {
               typeSpec: 'number'
             }
           ]
-        },
-        {
-          exported: false,
-          name: 'foo',
-          type: {
-            kind: 'Any'
-          },
         }
       ]);
 
@@ -343,6 +362,13 @@ describe('extract', () => {
       `, [
         {
           exported: true,
+          name: 'foo',
+          type: {
+            kind: 'Any'
+          },
+        },
+        {
+          exported: true,
           name: 'Bar',
           type: {
             kind: 'Interface'
@@ -358,13 +384,6 @@ describe('extract', () => {
               typeSpec: 'number'
             }
           ]
-        },
-        {
-          exported: true,
-          name: 'foo',
-          type: {
-            kind: 'Any'
-          },
         }
       ]);
   });

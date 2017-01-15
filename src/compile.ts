@@ -16,8 +16,15 @@ export function compile(javascriptSource: string): string {
         case 'Function':
           exportedDeclarations.push(renderFunction(declaration));
           break;
+        case 'Any':
+        case 'Array':
+        case 'Object':
         case 'Name':
-          exportedDeclarations.push(renderName(declaration));
+        case 'Nullable':
+        case 'NumberLiteral':
+        case 'Union':
+        case 'StringLiteral':
+          exportedDeclarations.push(renderConst(declaration));
           break;
         default:
           throw new Error(`Unable to render declaration '${declaration.type.kind}'.`);
@@ -28,10 +35,10 @@ export function compile(javascriptSource: string): string {
   return exportedDeclarations.join('\n\n');
 }
 
-function renderName(nameDeclaration: Declaration): string {
+function renderConst(nameDeclaration: Declaration): string {
   const source = [];
 
-  if (nameDeclaration.type.kind === 'Name') {
+  if (nameDeclaration.type) {
     source.push(`export const ${nameDeclaration.name}: ${renderType(nameDeclaration.type)};`);
   }
 
@@ -106,10 +113,8 @@ function renderFunction(functionDeclaration: Declaration): string {
 
     const source = [];
     source.push(`export function ${name}(${renderParameters(parameters)})`);
-    if (returnType) {
-      source.push(`: ${renderType(returnType)}`);
-    }
-    source.push(' {}');
+    source.push(`: ${returnType ? renderType(returnType) : 'void'}`);
+    source.push(';');
 
     return source.join('');
   }
@@ -179,7 +184,7 @@ function renderType(type?: TypeNode): string {
     case 'Nullable':
       return `${renderType(type.type)} | null`;
     case 'NumberLiteral':
-      return `${type.value}`;
+      return 'number';
     case 'Object':
       return `{ ${type.members.map(renderProperty).join(', ')} }`;
     case 'StringLiteral':
