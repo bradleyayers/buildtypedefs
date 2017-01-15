@@ -139,7 +139,6 @@ export function extract(source: string): Declaration[] {
       switch (line.kind) {
         case 'DeclarationLine':
           const declarationLine = line;
-          debugger;
           const declaration = parseDeclaration();
           let parentDeclaration = findParentDeclaration(comments.associatedNodePath);
           if (!parentDeclaration) {
@@ -343,7 +342,6 @@ export function extract(source: string): Declaration[] {
           type: 'Identifier',
           name: `_${i}`
         }));
-        debugger;
 
         let fromTheCodeParams = [];
         switch (node.type) {
@@ -485,7 +483,7 @@ export function extract(source: string): Declaration[] {
       lineGroups[lineGroups.length - 1].lines.push(line);
     }
 
-    function lastLineLocStartLine(): number {
+    function getLastLineLocStartLine(): number {
       const lines = lineGroups[lineGroups.length - 1].lines;
       return lines[lines.length - 1].loc.start.line;
     }
@@ -499,21 +497,26 @@ export function extract(source: string): Declaration[] {
       startEmptyBlock(commentsPath.parent);
       pushLine(lines[0]);
 
-      let marked = false;
+      let hasAssociatedNodeToGroup = false;
 
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
-        if (lastLineLocStartLine() !== line.loc.start.line - 1) {
-          if (line.loc.start.line > commentsPath.node.loc.end.line) {
-            marked = true;
-            lineGroups[lineGroups.length - 1].associatedNodePath = commentsPath.parentPath;
+        const isCommentSplit = getLastLineLocStartLine() !== line.loc.start.line - 1;
+        if (isCommentSplit) {
+          const isTrailingComment = line.loc.start.line > commentsPath.node.loc.end.line;
+          if (isTrailingComment) {
+            const lastLeadingComment = lineGroups[lineGroups.length - 1];
+            lastLeadingComment.associatedNodePath = commentsPath.parentPath;
+            hasAssociatedNodeToGroup = true;
+            startEmptyBlock(commentsPath.parent);
+          } else if (parseLine(line.value).kind === 'DeclarationLine') {
+            startEmptyBlock(commentsPath.parent);
           }
-          startEmptyBlock(commentsPath.parent);
         }
         pushLine(line);
       }
 
-      if (!marked) {
+      if (!hasAssociatedNodeToGroup) {
         lineGroups[lineGroups.length - 1].associatedNodePath = commentsPath.parentPath;
       }
     });

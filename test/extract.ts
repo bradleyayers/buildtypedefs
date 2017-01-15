@@ -658,6 +658,49 @@ describe('extract', () => {
         }
       ]);
 
+    check('split comment documented method of undeclared class', `
+      class Foo {
+        // :: (?Object) → ContentMatch
+
+        // Bar is a great function.
+        bar(a, b = 1) {}
+      }
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class',
+          },
+          properties: [
+            {
+              name: 'bar',
+              typeSpec: '(?Object) → ContentMatch',
+              type: {
+                kind: 'Function',
+                parameters: [
+                  {
+                    kind: 'FunctionParameter',
+                    name: 'a',
+                    type: {
+                      kind: 'Nullable',
+                      type: {
+                        kind: 'Name',
+                        name: 'Object'
+                      }
+                    }
+                  }
+                ],
+                returnType: {
+                  kind: 'Name',
+                  name: 'ContentMatch'
+                }
+              }
+            }
+          ]
+        }
+      ]);
+
     check('property of declared class', `
       // ::-
       class Foo {

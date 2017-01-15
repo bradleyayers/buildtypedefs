@@ -25,7 +25,7 @@ export function compile(javascriptSource: string): string {
     }
   }
 
-  return exportedDeclarations.join('\n\n') + '\n';
+  return exportedDeclarations.join('\n\n');
 }
 
 function renderName(nameDeclaration: Declaration): string {
