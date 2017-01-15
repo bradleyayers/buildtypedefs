@@ -2,7 +2,7 @@ import * as j from 'jscodeshift';
 import { Path, Spec, MethodSpec, PropertySpec, SpecKind } from './types';
 import invariant from './invariant';
 import { closestViaParentPath } from './traverse';
-import { parse, TypeNode, FunctionParameterTypeNode } from './getdocs/parser';
+import { parse, TypeNode, FunctionParameterTypeNode, ObjectMemberTypeNode } from './getdocs/parser';
 
 export interface ClassTypeNode {
   kind: 'Class';
@@ -146,7 +146,8 @@ export function extract(source: string): Declaration[] {
         case 'DeclarationLine':
           const declarationLine = line;
           const declaration = parseDeclaration();
-          let parentDeclaration = findParentDeclaration(comments.associatedNodePath);
+          debugger;
+          let parentDeclaration = findDeclaredParent(comments.associatedNodePath);
           if (!parentDeclaration) {
             const classDeclarations = j(comments.associatedNodePath).closest(j.ClassDeclaration).paths();
             if (classDeclarations.length === 1) {
@@ -168,7 +169,27 @@ export function extract(source: string): Declaration[] {
           }
 
           if (parentDeclaration) {
-            if (declaration.type.kind === 'Function' && declaration.name === 'constructor' && parentDeclaration.type.kind === 'Class') {
+            if (parentDeclaration.type.kind === 'Class' && comments.associatedNodePath.node.type === 'Property') {
+              const propertyName = comments.associatedNodePath.parent.parent.value.left.property.name;
+              for (const property of parentDeclaration.properties) {
+                if (property.name === propertyName) {
+                  if (property.type.kind !== 'Object') {
+                    console.warn(`Found explicit ObjectMember: converting ${parentDeclaration.name}.${propertyName} from type '${property.type.kind}' to 'Object'.`)
+                    property.type = {
+                      kind: 'Object',
+                      members: [],
+                    };
+                    delete property.typeSpec;
+                  }
+                  property.type.members.splice(0, 0, {
+                    kind: 'ObjectMember',
+                    name: declaration.name,
+                    type: declaration.type
+                  } as ObjectMemberTypeNode);
+                }
+              }
+              comments.associatedNodePath.parent.node.type
+            } else if (declaration.type.kind === 'Function' && declaration.name === 'constructor' && parentDeclaration.type.kind === 'Class') {
               parentDeclaration.type.constructorParameters = declaration.type.parameters;
             } else if (declaration.type.kind === 'Function' && parentDeclaration.type.kind === 'Class' && comments.associatedNodePath.node.static) {
               parentDeclaration.type.staticProperties = parentDeclaration.type.staticProperties || [];
@@ -217,7 +238,7 @@ export function extract(source: string): Declaration[] {
       }
     }
 
-    function findParentDeclaration(p: any): Declaration | undefined {
+    function findDeclaredParent(p: any): Declaration | undefined {
       for (const { path, declaration } of nodeToDeclarationMap) {
         let parent = p;
         while (parent = parent.parentPath) {
@@ -243,6 +264,7 @@ export function extract(source: string): Declaration[] {
           // - a static class property -- Foo.foo = 'bar'
           const thisExpressionPaths = j(node).find(j.ThisExpression).paths();
           if (thisExpressionPaths.length) {
+            if (!thisExpressionPaths[0].parent.value.property.name) debugger;
             return thisExpressionPaths[0]
               .parent.value // MemberExpression (this.foo)
               .property.name; // foo
@@ -257,6 +279,8 @@ export function extract(source: string): Declaration[] {
             throw new Error('Unable to deal with a multi-variable declaration.');
           }
           return node.declarations[0].id.name;
+        case 'Property':
+          return node.key.name;
       }
       debugger;
       throw new Error(`Unable to derive declaration name from a '${node.type}'.`);
@@ -371,6 +395,14 @@ export function extract(source: string): Declaration[] {
           }
         }
       }
+
+      // if (comments.associatedNodePath.value.type === 'Property') {
+      //   declaration.type = {
+      //     kind: 'ObjectMember',
+      //     name: declaration.name,
+      //     type: declaration.type,
+      //   }
+      // }
 
       if (comments.associatedNodePath.value.type === 'MethodDefinition') {
         while (line) nextLine();

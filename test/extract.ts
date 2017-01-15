@@ -988,6 +988,54 @@ describe('extract', () => {
         }
       ]);
 
+    check('constructor initialised object property of an undeclared class', `
+      class Foo {
+        constructor(foo) {
+          // :: Object<string>
+          this.capitals = {
+            // :: "A"
+            a: 'A',
+            // :: "B"
+            b: 'B'
+          };
+        }
+      }
+      `, [
+        {
+          exported: false,
+          name: 'Foo',
+          type: {
+            kind: 'Class'
+          },
+          properties: [
+            {
+              name: 'capitals',
+              type: {
+                kind: 'Object',
+                members: [
+                  {
+                    kind: 'ObjectMember',
+                    name: 'a',
+                    type: {
+                      kind: 'StringLiteral',
+                      value: 'A'
+                    }
+                  },
+                  {
+                    kind: 'ObjectMember',
+                    name: 'b',
+                    type: {
+                      kind: 'StringLiteral',
+                      value: 'B'
+                    }
+                  },
+                ]
+              }
+            }
+          ]
+        }
+      ]);
+
     check('static property of declared class', `
       // ::-
       class Foo {}

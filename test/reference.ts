@@ -14,6 +14,7 @@ describe('reference', () => {
     const name = basename(javascript, '.js');
     const typescript = join(directory, `${name}.d.ts`)
 
+    // if (name === 'scratchpad')
     it(`compiles '${name}'`, () => {
       const javascriptSource = readFileSync(javascript, 'utf8');
       const typescriptSource = readFileSync(typescript, 'utf8');
