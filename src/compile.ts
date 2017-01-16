@@ -215,7 +215,25 @@ export function compile(javascriptSource: string): string {
             }
         }
       case 'Function':
-        return `(${renderParameters(type.parameters)}) => ${renderType(type.returnType)}`;
+        return (() => {
+          if (!type.returnType) {
+            return `(${renderParameters(type.parameters)}) => void`;
+          }
+
+          let suffix = type.returnType.kind === 'Nullable'
+            ? ' | void'
+            : '';
+
+          const returnType = type.returnType.kind === 'Nullable'
+            ? type.returnType.type
+            : type.returnType;
+
+          if (returnType.kind === 'Function') {
+            return `(${renderParameters(type.parameters)}) => (${renderType(returnType)})${suffix}`;
+          } else {
+            return `(${renderParameters(type.parameters)}) => ${renderType(returnType)}${suffix}`;
+          }
+        })();
       case 'Nullable':
         return `${renderType(type.type)} | null`;
       case 'NumberLiteral':
