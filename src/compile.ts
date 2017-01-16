@@ -246,11 +246,15 @@ export function compile(javascriptSource: string): string {
   function renderParameters(parameters: FunctionParameterTypeNode[]): string {
     return parameters.map((param, i) => {
       const parts = [];
+      const optional = param.type.kind === 'Nullable';
+      const type = param.type.kind === 'Nullable'
+        ? param.type.type
+        : param.type;
       if (param.rest) {
         parts.push('...');
       }
-      parts.push(`${param.name || `_${i}`}: `);
-      parts.push(renderType(param.type));
+      parts.push(`${param.name || `_${i}`}${optional ? '?' : ''}: `);
+      parts.push(renderType(type));
       return parts.join('');
     }).join(', ');
   }

@@ -3,4 +3,5 @@ export class Foo {
 
   static foo: () => void;
   static bar: (num: number) => void;
+  static baz: (str?: string) => void;
 }
