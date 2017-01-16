@@ -157,12 +157,13 @@ export function compile(javascriptSource: string): string {
         return `${name}: ${renderObject(type, true)}`;
       case 'Any':
       case 'Array':
-      case 'Function':
       case 'Name':
       case 'NumberLiteral':
       case 'StringLiteral':
       case 'Union':
         return `${name}: ${renderType(type)}`;
+      case 'Function':
+        return `${name}(${renderParameters(type.parameters)}): ${renderType(type.returnType)}`;
       default:
         throw new Error(`Unable to render property type '${type.kind}'.`);
     }
