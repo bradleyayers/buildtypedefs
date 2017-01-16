@@ -1,0 +1,1 @@
+export const a: { new (...args: any[]): Foo };

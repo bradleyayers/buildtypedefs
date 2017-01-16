@@ -191,12 +191,21 @@ export function compile(javascriptSource: string): string {
             if (type.parameters && type.parameters.length > 1) {
               throw new Error(`Unable to encode an ${name} with more than one type parameter.`);
             }
-            const valueType = type.parameters
-              ? renderType(type.parameters[0])
-              : 'any';
-            return `{ [key: string]: ${valueType} }`;
+            return `{ [key: string]: ${
+              type.parameters
+                ? renderType(type.parameters[0])
+                : 'any'
+              } }`;
           case 'bool':
             return 'boolean';
+          case 'constructor':
+            if (type.parameters && type.parameters.length > 1) {
+              throw new Error(`Unable to encode an ${name} with more than one type parameter.`);
+            }
+            return `{ new (...args: any[]): ${
+              type.parameters
+                ? renderType(type.parameters[0])
+                : 'any'} }`;
           default:
             if (type.parameters && type.parameters.length) {
               return `${name}<${type.parameters.map(renderType).join(', ')}>`

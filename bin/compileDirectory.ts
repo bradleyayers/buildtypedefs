@@ -25,7 +25,7 @@ for (const sourceFileName of readdirSync(inDirPath)) {
   const declarationFileName = `${baseName}.d.ts`;
   const importProxyFileName = `${baseName}.js`;
 
-  const outputFilesReady = prepareOutputFile(declarationFileName) && prepareOutputFile(importProxyFileName);
+  const outputFilesReady = prepareOutputFile(declarationFileName);
   if (outputFilesReady) {
     const source = readFileSync(join(inDirPath, sourceFileName), 'utf8');
     const declarationSource = compile(source);
