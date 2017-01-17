@@ -178,7 +178,9 @@ export function compile(javascriptSource: string): string {
       case 'Any':
         return 'any';
       case 'Array':
-        return `${renderType(type.type)}[]`;
+        return type.type.kind === 'Function'
+          ? `(${renderType(type.type)})[]`
+          : `${renderType(type.type)}[]`;
       case 'Name':
         const name = isIdentifier(type.name)
           ? type.name

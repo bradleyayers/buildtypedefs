@@ -17,3 +17,5 @@ export const h: number;
 export const i: any;
 
 export function j(_0: number): number;
+
+export const k: (() => void)[];
