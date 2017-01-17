@@ -1,5 +1,5 @@
 export class Foo {
-  constructor(a: number) {}
+  constructor(a: number);
 
   a: number;
 

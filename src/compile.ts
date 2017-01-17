@@ -145,7 +145,7 @@ export function compile(javascriptSource: string): string {
   }
 
   function renderConstructor(constructor: FunctionParameterTypeNode[]) {
-    return `constructor(${renderParameters(constructor)}) {}`;
+    return `constructor(${renderParameters(constructor)});`;
   }
 
   function renderProperty(propertyDeclaration: Declaration): string {
