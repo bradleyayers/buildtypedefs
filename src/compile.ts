@@ -182,13 +182,7 @@ export function compile(javascriptSource: string): string {
           ? `(${renderType(type.type)})[]`
           : `${renderType(type.type)}[]`;
       case 'Name':
-        const name = isIdentifier(type.name)
-          ? type.name
-          : type.name.replace('.', '_');
-        if (!isIdentifier(type.name)) {
-          console.warn(`Unable to render '${type.name}' as an identifier, using '${name}' instead.`);
-        }
-
+        const name = type.name;
         switch (name) {
           case 'Object':
             if (type.parameters && type.parameters.length > 1) {
