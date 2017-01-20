@@ -8,3 +8,5 @@ export class Foo {
   static bar: number;
   static baz(_0: number): void;
 }
+
+export class ReplaceError extends Error {}

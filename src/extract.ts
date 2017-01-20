@@ -103,14 +103,15 @@ export function extract(source: string): Declaration[] {
     let result;
 
     // Test for a DeclarationLine.
-    result = line.match(/^( +)([a-zA-Z\._]*)(::-|::|:|;;)(?: *)([^#]*)(?: #path=\w+\.prototype\.)?(\w+)?$/);
+    result = line.match(/^( +)([a-zA-Z\._]*)(::-|::|:|;;)(?: *)(.*)$/);
     if (result) {
-      const [_, indent, identifier, separator, spec, pathIdentifier] = result;
+      const [_, indent, identifier, separator, tail] = result;
 
       // guard against `// includes:`
       const isDocumentation = (identifier && separator === ':');
 
       if (!isDocumentation) {
+        const [_, spec, pathIdentifier] = tail.match(/([^#]*)(?: #path=\w+\.prototype\.(\w+))?$/);
         const line: DeclarationLine = {
           kind: 'DeclarationLine',
           indent: indent.length
