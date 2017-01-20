@@ -1,5 +1,6 @@
+#! /usr/bin/env node
 import { mkdirSync, readdirSync, readFileSync, unlinkSync, statSync, writeFileSync, existsSync } from 'fs';
-import { compile } from '../src/compile';
+import { compile } from '../compile';
 import { usage } from 'yargs';
 import { basename, extname, join, resolve } from 'path';
 

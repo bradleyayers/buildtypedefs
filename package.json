@@ -1,10 +1,10 @@
 {
-  "name": "prosemirror-typescript",
+  "name": "getdocs2ts",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "bin": {
-    "prosemirror-typescript": "bin/prosemirror-typescript.ts"
+    "getdocs2ts": "src/bin/compileDirectory.js"
   },
   "scripts": {
     "compile": "ts-node ./bin/compile.ts",

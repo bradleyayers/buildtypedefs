@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { compile } from '../src/compile';
+import { compile } from '../compile';
 import { usage } from 'yargs';
 
 const { argv } = usage('Usage: $0 [file..]').help();
