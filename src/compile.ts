@@ -276,8 +276,8 @@ export function compile(javascriptSource: string): string {
   function renderParameters(parameters: FunctionParameterTypeNode[]): string {
     return parameters.map((param, i) => {
       const parts = [];
-      const optional = param.type.kind === 'Nullable';
-      const type = param.type.kind === 'Nullable'
+      const optional = parameters.slice(i).every(param => param.type.kind === 'Nullable');
+      const type = optional && param.type.kind === 'Nullable'
         ? param.type.type
         : param.type;
       if (param.rest) {
