@@ -10,3 +10,5 @@ export class Foo {
 }
 
 export class ReplaceError extends Error {}
+
+export class AnotherError extends Error {}

@@ -103,7 +103,7 @@ export function extract(source: string): Declaration[] {
     let result;
 
     // Test for a DeclarationLine.
-    result = line.match(/^( +)([a-zA-Z\._]*)(::-|::|:|;;)(?: *)(.*)$/);
+    result = line.match(/^( +)([a-zA-Z\._]*)(::-|::|:-|:|;;)(?: *)(.*)$/);
     if (result) {
       const [_, indent, identifier, separator, tail] = result;
 

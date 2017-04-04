@@ -28,6 +28,7 @@ for (const sourceFileName of readdirSync(inDirPath)) {
 
   const outputFilesReady = prepareOutputFile(declarationFileName);
   if (outputFilesReady) {
+    console.log(`> ${sourceFileName}`);
     const source = readFileSync(join(inDirPath, sourceFileName), 'utf8');
     const declarationSource = compile(source);
     if (declarationSource.length) {
