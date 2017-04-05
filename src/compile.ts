@@ -178,7 +178,7 @@ export function compile(javascriptSource: string): string {
       case 'Any':
         return 'any';
       case 'Array':
-        return type.type.kind === 'Function'
+        return type.type.kind === 'Function' || type.type.kind === 'Nullable' || type.type.kind === 'Union'
           ? `(${renderType(type.type)})[]`
           : `${renderType(type.type)}[]`;
       case 'Name':
