@@ -16,7 +16,8 @@
     "@types/node": "^6.0.53",
     "jscodeshift": "^0.3.30",
     "ts-node": "^1.7.2",
-    "typescript": "^2.1.4"
+    "typescript": "^2.1.4",
+    "yargs": "^8.0.1"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
