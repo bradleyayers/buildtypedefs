@@ -53,6 +53,12 @@ describe('class definition', () => {
     env.sb.toString().should.equal("class Foo {" + cr + "  prop1(state: EditorState): any" + cr + "}")
   });
 
+  it('should add interface definition with one optional function property', () => {
+    const item: ClassOrInterfaceDeclaration = { type: "interface", properties: { prop1: { type: "Function", optional: true, returns: { type: "any"}, params: [{name: "state", type: "EditorState"}] } } };
+    classDef(env, item, "Foo");
+    env.sb.toString().should.equal("interface Foo {" + cr + "  prop1?: ((state: EditorState) => any) | null;" + cr + "}")
+  });
+
   it('should add class definition with one static let property', () => {
     const item: ClassOrInterfaceDeclaration = { type: "class", staticProperties: { prop1: { type: "number" } } };
     classDef(env, item, "Foo");

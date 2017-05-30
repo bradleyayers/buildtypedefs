@@ -73,7 +73,7 @@ describe('when adding type definition', () => {
   it('should handle an object with unknown properties', () => {
     const item = { type: "Object", };
     typeDef(env, item);
-    env.sb.toString().should.equal("Object")
+    env.sb.toString().should.equal("object")
   });
 
   it('should handle objects with a known value type', () => {
@@ -110,6 +110,12 @@ describe('when adding type definition', () => {
     const item = { type: "MyType", typeParams: [{ name: "typeParam1", type: "string" }, { name: "typeParam2", type: "number" }]};
     typeDef(env, item);
     env.sb.toString().should.equal("MyType<string, number>")
+  });
+
+  it('should handle ', () => {
+    const item = { type: "constructor", typeParams: [{ type: "Foo" }] }
+    typeDef(env, item);
+    env.sb.toString().should.equal("{ new(...args: any[]): Foo }")
   });
 
   describe('when type is unknown', () => {

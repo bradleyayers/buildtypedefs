@@ -1,28 +1,26 @@
 import {GenEnv} from "./env"
 import {FunctionType, Type, isFunction, isObject, Declaration, ClassOrInterfaceDeclaration, isClassOrInterfaceDeclaration} from "./types";
-import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType } from "./gentype";
+import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType, undefinedType } from "./gentype";
 
 function functionDeclarationDef(env: GenEnv, item: FunctionType) {
-  functionParamsDef(env, item.params);
+  functionParamsDef(env, item.params || []);
   env.append(": ")
   functionReturnDef(env, item.returns);
 }
 
 export function miscDef(env: GenEnv, type: Type & { optional?: boolean }, name: string, isInlineProp: boolean, processItemProperties: boolean = true) {
 
-  if (isFunction(type)) {
+  if (isFunction(type) && !type.optional) {
     const isConstructor = typeof type.id == "string" && /\.constructor$/.test(type.id);
     if (isConstructor) {
       env.append("constructor")
-      functionParamsDef(env, type.params);
+      functionParamsDef(env, type.params || []);
     } else {
       if(!isInlineProp) env.append("function ")
       env.append(name)
       functionDeclarationDef(env, type);
     }
-  }
-  else {
-    if(!isInlineProp) env.append("let ")
+  } else if (isInlineProp) {
     env.append(name)
     if (type.type) {
       if (type.optional) {
@@ -33,7 +31,13 @@ export function miscDef(env: GenEnv, type: Type & { optional?: boolean }, name: 
         typeDef(env, type)
       }
     }
-    if(isInlineProp) env.append(";")
+    env.append(";")
+  } else {
+    env.append("let " + name)
+    if (type.type) {
+      env.append(": ")
+      typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type)
+    }
   }
 
   if(isObject(type) && processItemProperties) {
@@ -92,10 +96,17 @@ export function classDef(env: GenEnv, decl: ClassOrInterfaceDeclaration, name: s
   env.appendLine("}")
 }
 
-export function itemDef(env: GenEnv, decl: Declaration, name: string) {
+export function itemDef(env: GenEnv, decl: Declaration, name: string, exportDecl: boolean = false) {
   if(isClassOrInterfaceDeclaration(decl)) {
-    classDef(env, decl, env.resolveTypeName(name))
+    const customCode: string | undefined = env.customCodeFor(name)
+    if (typeof customCode == 'string') {
+      env.append(customCode)
+    } else {
+      if (exportDecl) env.append("export ")
+      classDef(env, decl, env.resolveTypeName(name))
+    }
   } else {
+    if (exportDecl) env.append("export ")
     miscDef(env, decl, name, false, false)
   }
 }

@@ -2,7 +2,7 @@ import StringBuilder = require('string-builder');
 
 export type Imports = { [moduleName: string]: string[] }
 
-export type TypeInfo = { replaceBy?: string, definedIn?: string }
+export type TypeInfo = { replaceBy?: string, definedIn?: string, code?: string }
 export type TypeInfos = { [typeName: string]: TypeInfo }
 
 export const baseTypes: TypeInfos = {
@@ -10,23 +10,27 @@ export const baseTypes: TypeInfos = {
   string: {},
   number: {},
   any: {},
-  Object: {},
+  Object: { replaceBy: 'object' },
   this: {},
   null: {},
   undefined: {},
   T: {} // TODO: handle type parameters dynamically!
 }
 
-function mergeTypeInfo(a: TypeInfo, b: TypeInfo, typeName) {
-  if (typeof a.replaceBy == 'string' && typeof b.replaceBy == 'string') {
-    throw new Error("conflicting 'replaceBy' information for type '" + typeName + "'!")
+function mergeTypeInfo(a: TypeInfo, b: TypeInfo, typeName: string) {
+  function checkConflict(x: string | undefined, y: string | undefined, name: string) {
+    if (typeof x == 'string' && typeof y == 'string' && x != y) {
+      throw new Error("conflicting '" + name + "' information for type '" + typeName + "'!")
+    }
   }
-  if (typeof a.definedIn == 'string' && typeof b.definedIn == 'string') {
-    throw new Error("conflicting 'definedIn' information for type '" + typeName + "'!")
-  }
+  checkConflict(a.replaceBy, b.replaceBy, 'replaceBy')
+  checkConflict(a.definedIn, b.definedIn, 'definedIn')
+  checkConflict(a.code, b.code, 'code')
+
   return {
     replaceBy: a.replaceBy || b.replaceBy,
-    definedIn: a.definedIn || b.definedIn
+    definedIn: a.definedIn || b.definedIn,
+    code: a.code || b.code
   }
 }
 
@@ -70,6 +74,11 @@ export class GenEnv {
     return new GenEnv(this.currModuleName, this.imports, this.typeInfos, this.sb, this.indentation + "  ", this.firstInLine)
   }
 
+  customCodeFor(rawName: string): string | undefined {
+    const typeInfo = this.typeInfos[rawName]
+    return typeInfo && typeInfo.code
+  }
+
   resolveTypeName(rawName: string): string {
     const typeInfo = this.typeInfos[rawName]
     if (/^\"[^\"]*\"$/.test(rawName)) {
@@ -108,6 +117,6 @@ export class GenEnv {
   }
 } 
 
-export function emptyEnvForTests(): GenEnv {
-  return new GenEnv("test", {}, baseTypes, new StringBuilder())
+export function emptyEnvForTests(additionalTypes: TypeInfos = {}): GenEnv {
+  return new GenEnv("test", {}, mergeTypeInfos(baseTypes, additionalTypes), new StringBuilder())
 }
