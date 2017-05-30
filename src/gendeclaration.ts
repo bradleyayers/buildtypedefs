@@ -1,6 +1,6 @@
 import {GenEnv} from "./env"
 import {FunctionType, Type, isFunction, isObject, Declaration, ClassOrInterfaceDeclaration, isClassOrInterfaceDeclaration} from "./types";
-import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType } from "./gentype";
+import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType, undefinedType } from "./gentype";
 
 function functionDeclarationDef(env: GenEnv, item: FunctionType) {
   functionParamsDef(env, item.params);
@@ -10,7 +10,7 @@ function functionDeclarationDef(env: GenEnv, item: FunctionType) {
 
 export function miscDef(env: GenEnv, type: Type & { optional?: boolean }, name: string, isInlineProp: boolean, processItemProperties: boolean = true) {
 
-  if (isFunction(type)) {
+  if (isFunction(type) && !type.optional) {
     const isConstructor = typeof type.id == "string" && /\.constructor$/.test(type.id);
     if (isConstructor) {
       env.append("constructor")
@@ -20,9 +20,7 @@ export function miscDef(env: GenEnv, type: Type & { optional?: boolean }, name: 
       env.append(name)
       functionDeclarationDef(env, type);
     }
-  }
-  else {
-    if(!isInlineProp) env.append("let ")
+  } else if (isInlineProp) {
     env.append(name)
     if (type.type) {
       if (type.optional) {
@@ -33,7 +31,13 @@ export function miscDef(env: GenEnv, type: Type & { optional?: boolean }, name: 
         typeDef(env, type)
       }
     }
-    if(isInlineProp) env.append(";")
+    env.append(";")
+  } else {
+    env.append("let " + name)
+    if (type.type) {
+      env.append(": ")
+      typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type)
+    }
   }
 
   if(isObject(type) && processItemProperties) {
