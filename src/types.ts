@@ -1,7 +1,7 @@
 export interface FunctionType {
   type: "Function",
   id?: string
-  params: Parameter[],
+  params?: Parameter[],
   returns?: ReturnType
 }
 

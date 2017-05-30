@@ -3,7 +3,7 @@ import {FunctionType, Type, isFunction, isObject, Declaration, ClassOrInterfaceD
 import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType, undefinedType } from "./gentype";
 
 function functionDeclarationDef(env: GenEnv, item: FunctionType) {
-  functionParamsDef(env, item.params);
+  functionParamsDef(env, item.params || []);
   env.append(": ")
   functionReturnDef(env, item.returns);
 }
@@ -14,7 +14,7 @@ export function miscDef(env: GenEnv, type: Type & { optional?: boolean }, name: 
     const isConstructor = typeof type.id == "string" && /\.constructor$/.test(type.id);
     if (isConstructor) {
       env.append("constructor")
-      functionParamsDef(env, type.params);
+      functionParamsDef(env, type.params || []);
     } else {
       if(!isInlineProp) env.append("function ")
       env.append(name)

@@ -6,9 +6,8 @@ export function functionParamsDef(env: GenEnv, params: Parameter[]) {
   env.append("(")
 
   let dummyNameCounter = 0;
-  for(let i in params) {
-    let param = params[i];
-    if(i != "0") env.append(", ")
+  params.forEach((param, i) => {
+    if(i > 0) env.append(", ")
     if(param.rest) {
       env.append("...")
     }
@@ -18,10 +17,20 @@ export function functionParamsDef(env: GenEnv, params: Parameter[]) {
       env.append("p")
       if(params.length > 1) env.append((++dummyNameCounter).toString())
     }
-    if (param.optional) env.append("?")
-    env.append(": ")
-    typeDef(env, param)
-  }
+    if (param.optional) {
+      if (params.slice(i).filter(p => !(p.rest || p.optional)).length == 0) {
+        // only optional and rest parameters follow
+        env.append("?: ")
+        typeDef(env, param)
+      } else {
+        env.append(": ")
+        typeDef(env, unionWith(param, undefinedType))
+      }
+    } else {
+      env.append(": ")
+      typeDef(env, param)
+    }
+  })
 
   env.append(")")
 }
@@ -45,7 +54,7 @@ export function functionReturnDef(env: GenEnv, type: types.ReturnType | undefine
 }
 
 export function functionDef(env: GenEnv, item: FunctionType) {
-  functionParamsDef(env, item.params);
+  functionParamsDef(env, item.params || []);
   env.append(" => ")
   functionReturnDef(env, item.returns);
 }
