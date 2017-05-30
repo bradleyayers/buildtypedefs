@@ -1,5 +1,5 @@
 import StringBuilder = require('string-builder');
-import {ModuleContents} from "./types"
+import {isClassOrInterfaceDeclaration, ModuleContents} from "./types"
 import {GenEnv, Imports, TypeInfos, baseTypes, mergeTypeInfos} from "./env"
 import {itemDef} from "./gendeclaration";
 
@@ -12,12 +12,11 @@ export default function (module: ModuleContents, name: string, typeInfos: TypeIn
   const env = new GenEnv(name, imports, typeInfos, new StringBuilder(""));
 
   Object.keys(items).forEach((item, index) => {
-    if (index > 0) {
-      env.appendLine("");
-    }
+    if(index > 0) env.appendLine("");
+    const decl = items[item];
     env.append("export ")
-    itemDef(env, items[item], item);
-    env.append(";");
+    itemDef(env, decl, item);
+    if(!isClassOrInterfaceDeclaration(decl)) env.append(";");
   });
 
   let importStr: string = ""
