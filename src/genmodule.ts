@@ -14,8 +14,7 @@ export default function (module: ModuleContents, name: string, typeInfos: TypeIn
   Object.keys(items).forEach((item, index) => {
     if(index > 0) env.appendLine("");
     const decl = items[item];
-    env.append("export ")
-    itemDef(env, decl, item);
+    itemDef(env, decl, item, true);
     if(!isClassOrInterfaceDeclaration(decl)) env.append(";");
   });
 

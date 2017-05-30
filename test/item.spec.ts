@@ -39,4 +39,12 @@ describe('should add item definition', () => {
     env.sb.toString().should.equal("let testFoo: (() => void) | null | undefined")
   });
 
+  it('should allow using custom code for some definitions', () => {
+    let item = { type: "interface" };
+    const code = 'export type DOMOutputSpec = string | Node'
+    env = emptyEnvForTests({ DOMOutputSpec: { code } });
+    itemDef(env, item, "DOMOutputSpec");
+    env.sb.toString().should.equal(code)
+  });
+
 });

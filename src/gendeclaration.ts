@@ -96,10 +96,18 @@ export function classDef(env: GenEnv, decl: ClassOrInterfaceDeclaration, name: s
   env.appendLine("}")
 }
 
-export function itemDef(env: GenEnv, decl: Declaration, name: string) {
+export function itemDef(env: GenEnv, decl: Declaration, name: string, exportDecl: boolean = false) {
   if(isClassOrInterfaceDeclaration(decl)) {
-    classDef(env, decl, env.resolveTypeName(name))
+    const customCode: string | undefined = env.customCodeFor(name)
+    if (name == 'DOMOutputSpec') console.log('customCode: ' + customCode)
+    if (typeof customCode == 'string') {
+      env.append(customCode)
+    } else {
+      if (exportDecl) env.append("export ")
+      classDef(env, decl, env.resolveTypeName(name))
+    }
   } else {
+    if (exportDecl) env.append("export ")
     miscDef(env, decl, name, false, false)
   }
 }
