@@ -53,7 +53,7 @@ describe('should add function definition', () => {
     it('two named parameters', () => {
       const item = mkFunction({ type: "bool", name: "param1" }, { type: "Object", name: "param2" })
       functionDef(env, item);
-      env.sb.toString().should.equal("(param1: boolean, param2: Object) => void")
+      env.sb.toString().should.equal("(param1: boolean, param2: object) => void")
     });
 
     it('two optional named parameters', () => {

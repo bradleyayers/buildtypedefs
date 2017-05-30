@@ -10,7 +10,7 @@ export const baseTypes: TypeInfos = {
   string: {},
   number: {},
   any: {},
-  Object: {},
+  Object: { replaceBy: 'object' },
   this: {},
   null: {},
   undefined: {},

@@ -73,7 +73,7 @@ describe('when adding type definition', () => {
   it('should handle an object with unknown properties', () => {
     const item = { type: "Object", };
     typeDef(env, item);
-    env.sb.toString().should.equal("Object")
+    env.sb.toString().should.equal("object")
   });
 
   it('should handle objects with a known value type', () => {
