@@ -117,6 +117,10 @@ export function typeDef(env: GenEnv, item: Type, addParens: boolean = false) {
     env.append("{ [name: string]: ")
     typeDef(env, valueType)
     env.append(" }")
+  } else if (item.type == "constructor" && item.typeParams && item.typeParams.length == 1) {
+    env.append("{ new(...args: any[]): ")
+    typeDef(env, item.typeParams[0])
+    env.append(" }")
   } else {
     otherDef(env, item)
   }

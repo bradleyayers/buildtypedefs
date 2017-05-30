@@ -112,6 +112,12 @@ describe('when adding type definition', () => {
     env.sb.toString().should.equal("MyType<string, number>")
   });
 
+  it('should handle ', () => {
+    const item = { type: "constructor", typeParams: [{ type: "Foo" }] }
+    typeDef(env, item);
+    env.sb.toString().should.equal("{ new(...args: any[]): Foo }")
+  });
+
   describe('when type is unknown', () => {
     it('should replace type', () => {
       const item = { type: "MyType", typeParams: [{ name: "typeParam1", type: "string" }, { name: "typeParam2", type: "number" }] };
