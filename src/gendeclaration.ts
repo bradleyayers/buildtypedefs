@@ -33,7 +33,7 @@ export function miscDef(env: GenEnv, type: Type & { optional?: boolean }, name: 
         typeDef(env, type)
       }
     }
-    env.append(";")
+    if(isInlineProp) env.append(";")
   }
 
   if(isObject(type) && processItemProperties) {
