@@ -76,7 +76,6 @@ export class GenEnv {
 
   customCodeFor(rawName: string): string | undefined {
     const typeInfo = this.typeInfos[rawName]
-    if (rawName == 'DOMOutputSpec') console.log("typeInfo: " + JSON.stringify(typeInfo))
     return typeInfo && typeInfo.code
   }
 

@@ -99,7 +99,6 @@ export function classDef(env: GenEnv, decl: ClassOrInterfaceDeclaration, name: s
 export function itemDef(env: GenEnv, decl: Declaration, name: string, exportDecl: boolean = false) {
   if(isClassOrInterfaceDeclaration(decl)) {
     const customCode: string | undefined = env.customCodeFor(name)
-    if (name == 'DOMOutputSpec') console.log('customCode: ' + customCode)
     if (typeof customCode == 'string') {
       env.append(customCode)
     } else {
