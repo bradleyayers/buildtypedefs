@@ -7,9 +7,9 @@ This is a utility that transforms code documented with getdocs-style doc comment
 There is no CLI, so you must write a script, e.g.:
 
 ```
-import buildtypedefs from 'buildtypedefs';
+import getdocs2ts from 'getdocs2ts';
 
-buildtypedefs([
+getdocs2ts([
     {
         name: 'prosemirror-history',
         srcFiles: './prosemirror-history/src/*.js',
