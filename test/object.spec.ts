@@ -21,6 +21,6 @@ describe('should add object definition', () => {
       properties: { prop1: { type: "string" }, prop2: { type: "Object" } }
     };
     objectDef(env, item);
-    env.sb.toString().should.equal("{ prop1: string, prop2: object }")
+    env.sb.toString().should.equal("{ prop1: string, prop2: { [key: string]: any } }")
   });
 });

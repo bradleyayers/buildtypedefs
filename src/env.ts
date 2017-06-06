@@ -10,7 +10,10 @@ export const baseTypes: TypeInfos = {
   string: {},
   number: {},
   any: {},
-  Object: { replaceBy: 'object' },
+  // It's tempting to replace by `object` here, but using that type for return
+  // values means that it's not possible to do arbitrary property access (e.g.
+  // `attrs.foo`). Instead, an indexed type is used to support this.
+  Object: { replaceBy: '{ [key: string]: any }' },
   this: {},
   null: {},
   undefined: {},
