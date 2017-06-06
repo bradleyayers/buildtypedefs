@@ -21,14 +21,14 @@ export function functionParamsDef(env: GenEnv, params: Parameter[]) {
       if (params.slice(i).filter(p => !(p.rest || p.optional)).length == 0) {
         // only optional and rest parameters follow
         env.append("?: ")
-        typeDef(env, param)
+        typeDef(env, param, { isParam: true });
       } else {
         env.append(": ")
-        typeDef(env, unionWith(param, undefinedType))
+        typeDef(env, unionWith(param, undefinedType), { isParam: true })
       }
     } else {
       env.append(": ")
-      typeDef(env, param)
+      typeDef(env, param, { isParam: true })
     }
   })
 
@@ -84,19 +84,19 @@ function unionDef(env: GenEnv, typeParams: Type[], addParens: boolean = false) {
   if (typeParams.length == 0) {
     env.append("never")
   } else if (typeParams.length == 1) {
-    typeDef(env, typeParams[0], addParens)
+    typeDef(env, typeParams[0], { addParens })
   } else {
     if (addParens) env.append("(")
     for (let i = 0; i < typeParams.length; i++) {
       if (i > 0) env.append(" | ")
-      typeDef(env, typeParams[i], true)
+      typeDef(env, typeParams[i], { addParens: true })
     }
     if (addParens) env.append(")")
   }
 }
 
-function otherDef(env: GenEnv, type: OtherType) {
-  env.append(env.resolveTypeName(type.type))
+function otherDef(env: GenEnv, type: OtherType, isParam: boolean) {
+  env.append(env.resolveTypeName(type.type, isParam))
 
   if (type.typeParams) {
     env.append("<")
@@ -108,14 +108,17 @@ function otherDef(env: GenEnv, type: OtherType) {
   }
 }
 
-export function typeDef(env: GenEnv, item: Type, addParens: boolean = false) {
+export function typeDef(env: GenEnv, item: Type, options: { addParens?: boolean, isParam?: boolean } = {}) {
+  const addParens = 'addParens' in options ? options.addParens! : false;
+  const isParam = 'isParam' in options ? options.isParam! : false;
+  
   if (types.isFunction(item)) {
     if (addParens) env.append("(")
     functionDef(env, item)
     if (addParens) env.append(")")
   } else if (types.isArray(item)) {
     const elemType = item.typeParams[0];
-    typeDef(env, elemType, true);
+    typeDef(env, elemType, { addParens: true });
     env.append("[]");
   } else if (types.isObject(item)) {
     objectDef(env, item)
@@ -131,6 +134,6 @@ export function typeDef(env: GenEnv, item: Type, addParens: boolean = false) {
     typeDef(env, item.typeParams[0])
     env.append(" }")
   } else {
-    otherDef(env, item)
+    otherDef(env, item, isParam)
   }
 }

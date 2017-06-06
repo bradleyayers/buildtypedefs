@@ -103,7 +103,7 @@ export function itemDef(env: GenEnv, decl: Declaration, name: string, exportDecl
       env.append(customCode)
     } else {
       if (exportDecl) env.append("export ")
-      classDef(env, decl, env.resolveTypeName(name))
+      classDef(env, decl, env.resolveTypeName(name, false))
     }
   } else {
     if (exportDecl) env.append("export ")

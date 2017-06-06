@@ -2,7 +2,7 @@ import StringBuilder = require('string-builder');
 
 export type Imports = { [moduleName: string]: string[] }
 
-export type TypeInfo = { replaceBy?: string, definedIn?: string, code?: string }
+export type TypeInfo = { replaceBy?: string, replaceParamBy?: string, definedIn?: string, code?: string }
 export type TypeInfos = { [typeName: string]: TypeInfo }
 
 export const baseTypes: TypeInfos = {
@@ -10,7 +10,7 @@ export const baseTypes: TypeInfos = {
   string: {},
   number: {},
   any: {},
-  Object: { replaceBy: 'object' },
+  Object: { replaceBy: '{ [key: string]: any }', replaceParamBy: 'object' },
   this: {},
   null: {},
   undefined: {},
@@ -79,13 +79,17 @@ export class GenEnv {
     return typeInfo && typeInfo.code
   }
 
-  resolveTypeName(rawName: string): string {
+  resolveTypeName(rawName: string, isParam: boolean): string {
     const typeInfo = this.typeInfos[rawName]
     if (/^\"[^\"]*\"$/.test(rawName)) {
       return rawName
     }
     if (typeInfo) {
-      const name = typeof typeInfo.replaceBy == 'string' ? typeInfo.replaceBy : rawName
+      const name = typeof typeInfo.replaceBy == 'string'
+        ? isParam
+          ? typeInfo.replaceParamBy || typeInfo.replaceBy
+          : typeInfo.replaceBy
+        : rawName
       if (typeof typeInfo.definedIn == 'string' && typeInfo.definedIn != this.currModuleName) {
         const importsFromModule = this.imports[typeInfo.definedIn] || []
         if (importsFromModule.indexOf(name) == -1) importsFromModule.push(name)
