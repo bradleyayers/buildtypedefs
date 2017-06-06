@@ -34,6 +34,12 @@ describe('should add function definition', () => {
       env.sb.toString().should.equal("() => string | (() => void) | null | undefined")
     })
 
+    it('Object', () => {
+      const item: FunctionType = { type: "Function", params: [], returns: { type: "Object" } }
+      functionDef(env, item);
+      env.sb.toString().should.equal("() => { [key: string]: any }")
+    });
+
   });
 
   describe('with parameters', () => {
