@@ -26,13 +26,14 @@ export interface ParameterArgs {
   rest?: boolean,
   name?: string,
   optional?: boolean
+  description?: string
 }
 
 export type Parameter = Type & ParameterArgs
 
 export type ReturnType = Type & { optional?: boolean }
 
-export type Property = Type & { optional?: boolean }
+export type Property = Type & { optional?: boolean, description?: string }
 
 export function isFunction(t: Type): t is FunctionType {
   return t.type == "Function";
@@ -56,9 +57,12 @@ export interface ClassOrInterfaceDeclaration {
   extends?: Type
   properties?: { [propName: string]: Property }
   staticProperties?: { [propName: string]: Property }
+  description?: string
 }
 
-export type Declaration = ClassOrInterfaceDeclaration | Type
+export type OtherDeclaration = Type & { description?: string }
+
+export type Declaration = ClassOrInterfaceDeclaration | OtherDeclaration
 
 export function isClassOrInterfaceDeclaration(decl: Declaration): decl is ClassOrInterfaceDeclaration {
   return decl.type == "class" || decl.type == "interface"

@@ -76,4 +76,21 @@ describe('class definition', () => {
     classDef(env, item, "Foo");
     env.sb.toString().should.equal("class Foo {" + cr + "  prop1: number;" + cr + "  static prop2(state: EditorState): any" + cr + "}")
   });
+
+  it('should add class definition with JSDoc comments', () => {
+    const item: ClassOrInterfaceDeclaration = { type: "class", description: "Lorem ipsum", properties: { prop1: { description: "number of props given", type: "number", optional: true } } };
+    classDef(env, item, "Foo");
+    env.sb.toString().should.equal(
+      "/**" + cr +
+      " * Lorem ipsum" + cr +
+      " */" + cr +
+      "class Foo {" + cr +
+      "  /**" + cr +
+      "   * number of props given" + cr +
+      "   */" + cr +
+      "  prop1?: number | null;" + cr +
+      "}"
+    )
+  })
+
 });
