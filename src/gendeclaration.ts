@@ -22,7 +22,7 @@ export function miscDef(
   env: GenEnv,
   type: OtherDeclaration & { optional?: boolean },
   name: string,
-  options: { isInlineProp: boolean, processItemProperties?: boolean, prefix?: string }
+  options: { isInlineProp: boolean, prefix?: string }
 ) {
 
   jsDocComment(env, type.description);
@@ -55,12 +55,6 @@ export function miscDef(
     if (type.type) {
       env.append(": ")
       typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type)
-    }
-  }
-
-  if(isObject(type) && options.processItemProperties) {
-    for (let prop in type.properties) {
-      miscDef(env, type.properties[prop], prop, { isInlineProp: true })
     }
   }
 
