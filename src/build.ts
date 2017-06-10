@@ -4,7 +4,7 @@ const mkdirp = require('mkdirp');
 const path = require('path')
 
 import {ModuleContents} from "./types"
-import {TypeInfos, baseTypes, mergeTypeInfos} from "./env"
+import {TypeInfos, mergeTypeInfos} from "./env"
 import {exportedTypeInfos} from "./exports"
 import moduleDef from "./genmodule";
 

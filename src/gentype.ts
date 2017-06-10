@@ -79,7 +79,7 @@ function unionDef(env: GenEnv, typeParams: Type[], addParens: boolean = false): 
   }
 }
 
-function otherDef(env: GenEnv, type: OtherType) {
+function otherDef(env: GenEnv, type: OtherType): string {
   if (type.typeParams) {
     return env.resolveTypeName(type.type) +
       "<" + type.typeParams.map((param) => typeDef(env, param)).join(', ') + ">"
@@ -88,7 +88,7 @@ function otherDef(env: GenEnv, type: OtherType) {
   }
 }
 
-export function typeDef(env: GenEnv, item: Type, addParens: boolean = false) {
+export function typeDef(env: GenEnv, item: Type, addParens: boolean = false): string {
   if (types.isFunction(item)) {
     return parenthesize(addParens, functionDef(env, item))
   } else if (types.isArray(item)) {

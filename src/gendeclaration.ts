@@ -1,5 +1,5 @@
 import {GenEnv} from "./env"
-import {FunctionType, Type, isFunction, isObject, Declaration, ClassOrInterfaceDeclaration, OtherDeclaration, isClassOrInterfaceDeclaration} from "./types";
+import {FunctionType, isFunction, Declaration, ClassOrInterfaceDeclaration, OtherDeclaration, isClassOrInterfaceDeclaration} from "./types";
 import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType, undefinedType } from "./gentype";
 
 function functionDeclarationDef(env: GenEnv, item: FunctionType): string {

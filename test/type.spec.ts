@@ -1,10 +1,9 @@
 import {emptyEnvForTests} from "../src/env"
 import {typeDef} from "../src/gentype";
 
-
-const env = emptyEnvForTests();
-
 describe('when adding type definition', () => {
+
+  const env = emptyEnvForTests();
 
   it('should handle a function', () => {
     const item = { type: "Function", params: [] };
