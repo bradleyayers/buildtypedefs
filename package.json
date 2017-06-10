@@ -32,7 +32,6 @@
     "mkdirp": "0.5.1",
     "mold-template": "^2.0.1",
     "sinon": "^1.17.7",
-    "string-builder": "^0.1.4",
     "typescript": "^2.3.3"
   },
   "files": [
