@@ -4,7 +4,7 @@ const mkdirp = require('mkdirp');
 const path = require('path')
 
 import {ModuleContents} from "./types"
-import {TypeInfos, baseTypes, mergeTypeInfos} from "./env"
+import {TypeInfos, mergeTypeInfos} from "./env"
 import {exportedTypeInfos} from "./exports"
 import moduleDef from "./genmodule";
 
@@ -32,7 +32,7 @@ export default function (
     const mod = moduleContents[module.name]
     let sb = moduleDef(mod, module.name, typeInfos);
     mkdirpIfNotExists(path.dirname(module.outFile))
-    fs.writeFileSync(module.outFile, (module.header || '') + sb.toString());
+    fs.writeFileSync(module.outFile, (module.header || '') + sb.join("\n"));
   }
 
 }

@@ -1,21 +1,47 @@
 import {GenEnv} from "./env"
-import {FunctionType, Type, isFunction, isObject, Declaration, ClassOrInterfaceDeclaration, OtherDeclaration, isClassOrInterfaceDeclaration} from "./types";
+import {FunctionType, isFunction, Declaration, ClassOrInterfaceDeclaration, OtherDeclaration, isClassOrInterfaceDeclaration} from "./types";
 import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType, undefinedType } from "./gentype";
 
-function functionDeclarationDef(env: GenEnv, item: FunctionType) {
-  functionParamsDef(env, item.params || []);
-  env.append(": ")
-  functionReturnDef(env, item.returns);
+function functionDeclarationDef(env: GenEnv, item: FunctionType): string {
+  return functionParamsDef(env, item.params || []) + ": " + functionReturnDef(env, item.returns)
 }
 
-function jsDocComment(env: GenEnv, comment?: string) {
-  if (comment == undefined) return
-  env.append("/**")
-  comment.trim().split('\n').forEach((line) => {
-    env.appendLine(" * " + line.trim());
-  })
-  env.appendLine(" */")
-  env.appendLine("")
+function jsDocComment(env: GenEnv, comment?: string): string[] {
+  if (comment == undefined) return []
+  return ([] as string[]).concat(
+    ["/**"],
+    comment.trim().split('\n').map((line) => " * " + line.trim()),
+    [" */"]
+  )
+}
+
+function miscDefBody(
+  env: GenEnv,
+  type: OtherDeclaration & { optional?: boolean },
+  name: string,
+  options: { isInlineProp: boolean }
+): string {
+  if (isFunction(type) && !type.optional) {
+    const isConstructor = typeof type.id == "string" && /\.constructor$/.test(type.id);
+    if (isConstructor) {
+      return "constructor" + functionParamsDef(env, type.params || [])
+    } else {
+      return (options.isInlineProp ? "" : "function ") + name + functionDeclarationDef(env, type)
+    }
+  } else if (options.isInlineProp) {
+    if (type.type) {
+      if (type.optional) {
+        return name + "?: " + typeDef(env, unionWith(type, nullType)) + ";"
+      } else {
+        return name + ": " + typeDef(env, type) + ";"
+      }
+    } else {
+      return name + ";"
+    }
+  } else {
+    return "let " + name + 
+      (type.type ? ": " + typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type) : "")
+  }
 }
 
 export function miscDef(
@@ -23,102 +49,50 @@ export function miscDef(
   type: OtherDeclaration & { optional?: boolean },
   name: string,
   options: { isInlineProp: boolean, prefix?: string }
-) {
+): string[] {
 
-  jsDocComment(env, type.description);
-  env.append(options.prefix || "")
-
-  if (isFunction(type) && !type.optional) {
-    const isConstructor = typeof type.id == "string" && /\.constructor$/.test(type.id);
-    if (isConstructor) {
-      env.append("constructor")
-      functionParamsDef(env, type.params || []);
-    } else {
-      if(!options.isInlineProp) env.append("function ")
-      env.append(name)
-      functionDeclarationDef(env, type);
-    }
-  } else if (options.isInlineProp) {
-    env.append(name)
-    if (type.type) {
-      if (type.optional) {
-        env.append("?: ")
-        typeDef(env, unionWith(type, nullType))
-      } else {
-        env.append(": ")
-        typeDef(env, type)
-      }
-    }
-    env.append(";")
-  } else {
-    env.append("let " + name)
-    if (type.type) {
-      env.append(": ")
-      typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type)
-    }
-  }
+  return ([] as string[]).concat(
+    jsDocComment(env, type.description),
+    [(options.prefix || "") + miscDefBody(env, type, name, options)]
+  )
 
 }
 
-export function classDef(env: GenEnv, decl: ClassOrInterfaceDeclaration, name: string, exportDecl: boolean = false) {
-  jsDocComment(env, decl.description)
+export function classDef(
+  env: GenEnv,
+  decl: ClassOrInterfaceDeclaration,
+  name: string,
+  exportDecl: boolean = false
+): string[] {
+  const typeParams = decl.typeParams ? "<" + decl.typeParams.map((typeParam) => typeDef(env, typeParam)).join(", ") + ">" : ""
+  const extendsClause = decl.extends ? " extends " + typeDef(env, decl.extends) : ""
+  const header = decl.type + " " + name + typeParams + extendsClause
 
-  if (exportDecl) env.append("export ")
-  env.append(decl.type + " " + name + " ")
+  const properties = decl.properties || {}
+  const staticProperties = decl.staticProperties || {}
+  const decls = ([] as string[]).concat(
+    ("constructor" in decl && !(decl.constructor instanceof Function))
+      ? miscDef(env, decl.constructor, name, { isInlineProp: false })
+      : [],
+    ...Object.keys(properties).map((prop) => miscDef(env, properties[prop], prop, { isInlineProp: true })),
+    ...Object.keys(staticProperties).map((prop) => miscDef(env, staticProperties[prop], prop, { isInlineProp: true, prefix: "static " }))
+  )
 
-  if (decl.typeParams) {
-    env.append("<")
-    for(let i in decl.typeParams) {
-      if (i != "0"){
-        env.append(", ")
-      }
-
-      typeDef(env, decl.typeParams[i]);
-    }
-    env.append("> ")
-  }
-
-  if(decl.extends) {
-    env.append("extends ")
-    typeDef(env, decl.extends);
-    env.append(" ")
-  }
-
-  env.append("{")
-
-  const indented = env.indent();
-
-  if ("constructor" in decl && !(decl.constructor instanceof Function)) {
-    indented.appendLine("")
-    miscDef(indented, decl.constructor, name, { isInlineProp: false });
-  }
-
-  if (decl.properties) {
-    for (let prop in decl.properties) {
-      indented.appendLine("")
-      miscDef(indented, decl.properties[prop], prop, { isInlineProp: true });
-    }
-  }
-
-  if (decl.staticProperties) {
-    for (let prop in decl.staticProperties) {
-      indented.appendLine("")
-      miscDef(indented, decl.staticProperties[prop], prop, { isInlineProp: true, prefix: "static " });
-    }
-  }
-
-  env.appendLine("}")
+  return ([] as string[]).concat(
+    jsDocComment(env, decl.description),
+    [(exportDecl ? "export " : "") + header + " {"],
+    decls.map((s) => "  " + s),
+    ["}"]
+  )
 }
 
-export function itemDef(env: GenEnv, decl: Declaration, name: string, exportDecl: boolean = false) {
-  if(isClassOrInterfaceDeclaration(decl)) {
+export function itemDef(env: GenEnv, decl: Declaration, name: string, exportDecl: boolean = false): string[] {
+  if (isClassOrInterfaceDeclaration(decl)) {
     const customCode: string | undefined = env.customCodeFor(name)
     if (typeof customCode == 'string') {
-      env.append(customCode)
-    } else {
-      classDef(env, decl, env.resolveTypeName(name), exportDecl)
+      return customCode.split("\n")
     }
-  } else {
-    miscDef(env, decl, name, { isInlineProp: false, prefix: exportDecl ? "export " : "" })
+    return classDef(env, decl, env.resolveTypeName(name), exportDecl)
   }
+  return miscDef(env, decl, name, { isInlineProp: false, prefix: exportDecl ? "export " : "" })
 }

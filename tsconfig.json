@@ -6,7 +6,8 @@
     "outDir": "out",
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
     "declaration": true
   },
   "include": [

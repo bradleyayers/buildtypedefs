@@ -1,50 +1,39 @@
-import {GenEnv, emptyEnvForTests} from "../src/env"
+import {emptyEnvForTests} from "../src/env"
 import {itemDef} from "../src/gendeclaration";
 
 
-let env: GenEnv;
-let cr = "\r\n";
-
-beforeEach(function () {
-  env = emptyEnvForTests();
-});
+const env = emptyEnvForTests();
 
 describe('should add item definition', () => {
   it('should create a class', () => {
     let item = { type: "class" };
-    itemDef(env, item, "Plugin");
-    env.sb.toString().should.equal('class Plugin {' + cr + "}")
+    itemDef(env, item, "Plugin").should.deep.equal(['class Plugin {',"}"])
   });
   it('should create a interface', () => {
     let item = { type: "interface" };
-    itemDef(env, item, "Plugin");
-    env.sb.toString().should.equal('interface Plugin {' + cr + "}")
+    itemDef(env, item, "Plugin").should.deep.equal(['interface Plugin {',"}"])
   });
 
   it('should create an object', () => {
     let item = { type: "Object", properties: { props: {type: "EditorProps", optional: true}} };
-    itemDef(env, item, "PluginSpec");
-    env.sb.toString().should.equal("let PluginSpec: { props?: EditorProps | null }")
+    itemDef(env, item, "PluginSpec").should.deep.equal(["let PluginSpec: { props?: EditorProps | null }"])
   });
 
   it('should handle a function', () => {
     let item = { type: "Function", params: [] };
-    itemDef(env, item, "testFoo");
-    env.sb.toString().should.equal("function testFoo(): void")
+    itemDef(env, item, "testFoo").should.deep.equal(["function testFoo(): void"])
   })
 
   it('should handle an optional function', () => {
     let item = { type: "Function", optional: true, params: [] };
-    itemDef(env, item, "testFoo");
-    env.sb.toString().should.equal("let testFoo: (() => void) | null | undefined")
+    itemDef(env, item, "testFoo").should.deep.equal(["let testFoo: (() => void) | null | undefined"])
   });
 
   it('should allow using custom code for some definitions', () => {
     let item = { type: "interface" };
     const code = 'export type DOMOutputSpec = string | Node'
-    env = emptyEnvForTests({ DOMOutputSpec: { code } });
-    itemDef(env, item, "DOMOutputSpec");
-    env.sb.toString().should.equal(code)
+    const customEnv = emptyEnvForTests({ DOMOutputSpec: { code } });
+    itemDef(customEnv, item, "DOMOutputSpec").should.deep.equal([code])
   });
 
 });

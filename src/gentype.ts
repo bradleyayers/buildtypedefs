@@ -2,37 +2,33 @@ import {GenEnv} from "./env"
 import {Type, FunctionType, ObjectType, Parameter, OtherType} from "./types";
 import * as types from "./types";
 
-export function functionParamsDef(env: GenEnv, params: Parameter[]) {
-  env.append("(")
-
+export function functionParamsDef(env: GenEnv, params: Parameter[]): string {
   let dummyNameCounter = 0;
-  params.forEach((param, i) => {
-    if(i > 0) env.append(", ")
+  const paramStrs = params.map((param, i) => {
+    let paramStr = '';
     if(param.rest) {
-      env.append("...")
+      paramStr += "..."
     }
 
-    if (param.name) env.append(param.name)
+    if (param.name) paramStr += param.name
     else {
-      env.append("p")
-      if(params.length > 1) env.append((++dummyNameCounter).toString())
+      paramStr += "p"
+      if(params.length > 1) paramStr += (++dummyNameCounter).toString()
     }
     if (param.optional) {
       if (params.slice(i).filter(p => !(p.rest || p.optional)).length == 0) {
         // only optional and rest parameters follow
-        env.append("?: ")
-        typeDef(env, param)
+        paramStr += "?: " + typeDef(env, param)
       } else {
-        env.append(": ")
-        typeDef(env, unionWith(param, undefinedType))
+        paramStr += ": " + typeDef(env, unionWith(param, undefinedType))
       }
     } else {
-      env.append(": ")
-      typeDef(env, param)
+      paramStr += ": " + typeDef(env, param)
     }
+    return paramStr
   })
 
-  env.append(")")
+  return "("+paramStrs.join(', ')+")"
 }
 
 export function unionWith(t: Type, ...ts: Type[]): Type {
@@ -45,92 +41,69 @@ export function unionWith(t: Type, ...ts: Type[]): Type {
 export const undefinedType: Type = { type: "undefined" };
 export const nullType: Type = { type: "null" };
 
-export function functionReturnDef(env: GenEnv, type: types.ReturnType | undefined) {
-  if(type) {
-    typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type)
-  } else {
-    env.append("void")
+export function functionReturnDef(env: GenEnv, type: types.ReturnType | undefined): string {
+  if (type) {
+    return typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type)
   }
+  return "void"
 }
 
-export function functionDef(env: GenEnv, item: FunctionType) {
-  functionParamsDef(env, item.params || []);
-  env.append(" => ")
-  functionReturnDef(env, item.returns);
+export function functionDef(env: GenEnv, item: FunctionType): string {
+  return functionParamsDef(env, item.params || []) + " => " + functionReturnDef(env, item.returns);
 }
 
-export function objectDef(env: GenEnv, item: ObjectType) {
-  env.append("{ ")
-  
-  let first: boolean = true;
-  for (let name in item.properties) {
+export function objectDef(env: GenEnv, item: ObjectType): string {
+  const propStrs = Object.keys(item.properties).map((name) => {
     const prop = item.properties[name]
-    if (!first) env.append(", ")
-    first = false;
-    env.append(name)
     if (prop.optional) {
-      env.append("?: ")
-      typeDef(env, unionWith(prop, nullType))
+      return name + "?: " + typeDef(env, unionWith(prop, nullType))
     } else {
-      env.append(": ")
-      typeDef(env, prop)
+      return name + ": " + typeDef(env, prop)
     }
-  }
+  })
 
-  env.append(" }")
+  return "{ " + propStrs.join(", ") + " }"
 }
 
-function unionDef(env: GenEnv, typeParams: Type[], addParens: boolean = false) {
+function parenthesize(doIt: boolean, str: string) {
+  return doIt ? "("+str+")" : str
+}
+
+function unionDef(env: GenEnv, typeParams: Type[], addParens: boolean = false): string {
   if (typeParams.length == 0) {
-    env.append("never")
+    return "never"
   } else if (typeParams.length == 1) {
-    typeDef(env, typeParams[0], addParens)
+    return typeDef(env, typeParams[0], addParens)
   } else {
-    if (addParens) env.append("(")
-    for (let i = 0; i < typeParams.length; i++) {
-      if (i > 0) env.append(" | ")
-      typeDef(env, typeParams[i], true)
-    }
-    if (addParens) env.append(")")
+    return parenthesize(addParens, typeParams.map((typeParam) => typeDef(env, typeParam, true)).join(' | '))
   }
 }
 
-function otherDef(env: GenEnv, type: OtherType) {
-  env.append(env.resolveTypeName(type.type))
-
+function otherDef(env: GenEnv, type: OtherType): string {
   if (type.typeParams) {
-    env.append("<")
-    for (let i = 0; i < type.typeParams.length; i++) {
-      if (i > 0) env.append(", ")
-      typeDef(env, type.typeParams[i])
-    }
-    env.append(">")
+    return env.resolveTypeName(type.type) +
+      "<" + type.typeParams.map((param) => typeDef(env, param)).join(', ') + ">"
+  } else {
+    return env.resolveTypeName(type.type)
   }
 }
 
-export function typeDef(env: GenEnv, item: Type, addParens: boolean = false) {
+export function typeDef(env: GenEnv, item: Type, addParens: boolean = false): string {
   if (types.isFunction(item)) {
-    if (addParens) env.append("(")
-    functionDef(env, item)
-    if (addParens) env.append(")")
+    return parenthesize(addParens, functionDef(env, item))
   } else if (types.isArray(item)) {
     const elemType = item.typeParams[0];
-    typeDef(env, elemType, true);
-    env.append("[]");
+    return typeDef(env, elemType, true) + "[]";
   } else if (types.isObject(item)) {
-    objectDef(env, item)
+    return objectDef(env, item)
   } else if (item.type == "union") {
-    unionDef(env, item.typeParams || [], addParens)
+    return unionDef(env, item.typeParams || [], addParens)
   } else if (item.type == "Object" && item.typeParams && item.typeParams.length == 1) {
     const valueType = item.typeParams[0];
-    env.append("{ [name: string]: ")
-    typeDef(env, valueType)
-    env.append(" }")
+    return "{ [name: string]: " + typeDef(env, valueType) + " }"
   } else if (item.type == "constructor" && item.typeParams && item.typeParams.length == 1) {
-    env.append("{ new(...args: any[]): ")
-    typeDef(env, item.typeParams[0])
-    env.append(" }")
+    return "{ new(...args: any[]): " + typeDef(env, item.typeParams[0]) + " }"
   } else {
-    otherDef(env, item)
+    return otherDef(env, item)
   }
 }

@@ -1,29 +1,34 @@
-import StringBuilder = require('string-builder');
 import {isClassOrInterfaceDeclaration, ModuleContents} from "./types"
 import {GenEnv, Imports, TypeInfos, baseTypes, mergeTypeInfos} from "./env"
 import {itemDef} from "./gendeclaration";
 
-export default function (module: ModuleContents, name: string, typeInfos: TypeInfos): StringBuilder {
+export default function (module: ModuleContents, name: string, typeInfos: TypeInfos): string[] {
 
   typeInfos = mergeTypeInfos(typeInfos, baseTypes)
 
   const imports: Imports = {};
   const items = module.items || {};
-  const env = new GenEnv(name, imports, typeInfos, new StringBuilder(""));
+  const env = new GenEnv(name, imports, typeInfos);
 
-  Object.keys(items).forEach((item, index) => {
-    if(index > 0) env.appendLine("");
-    const decl = items[item];
-    itemDef(env, decl, item, true);
-    if(!isClassOrInterfaceDeclaration(decl)) env.append(";");
-  });
+  const decls: string[] = ([] as string[]).concat(
+    ...Object.keys(items).map((item, index) => {
+      const decl = items[item];
+      const lines = itemDef(env, decl, item, true)
+      if (!isClassOrInterfaceDeclaration(decl)) {
+        lines[lines.length-1] += ";"
+      }
+      return lines
+    })
+  )
 
-  let importStr: string = ""
-  for(let moduleName of Object.keys(imports).sort()) {
-    importStr += "import { " + imports[moduleName].sort().join(', ') + " } from '" + moduleName + "';\r\n"
-  }
-  if (importStr != "") importStr += "\r\n"
+  const importDecls = Object.keys(imports).sort().map((moduleName) =>
+    "import { " + imports[moduleName].sort().join(', ') + " } from '" + moduleName + "';"
+  )
 
-  return new StringBuilder(importStr + env.sb.toString())
+  return ([] as string[]).concat(
+    importDecls,
+    importDecls.length > 0 ? [""] : [],
+    decls
+  )
 
 }

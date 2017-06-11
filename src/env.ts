@@ -1,5 +1,3 @@
-import StringBuilder = require('string-builder');
-
 export type Imports = { [moduleName: string]: string[] }
 
 export type TypeInfo = { replaceBy?: string, definedIn?: string, code?: string }
@@ -58,23 +56,13 @@ export class GenEnv {
   readonly imports: Imports
   private currModuleName: string
   private typeInfos: TypeInfos
-  readonly sb: StringBuilder
-  private indentation: string
-  private firstInLine: boolean
 
   private static warnedAbout: { [name: string]: true } = {}
 
-  constructor(currModuleName: string, imports: Imports, typeInfos: TypeInfos, sb: StringBuilder, indentation: string = "", firstInLine: boolean = true) {
+  constructor(currModuleName: string, imports: Imports, typeInfos: TypeInfos) {
     this.currModuleName = currModuleName
     this.imports = imports
     this.typeInfos = typeInfos
-    this.sb = sb
-    this.indentation = indentation
-    this.firstInLine = firstInLine
-  }
-
-  indent(): GenEnv {
-    return new GenEnv(this.currModuleName, this.imports, this.typeInfos, this.sb, this.indentation + "  ", this.firstInLine)
   }
 
   customCodeFor(rawName: string): string | undefined {
@@ -102,24 +90,8 @@ export class GenEnv {
     }
     return rawName
   }
-
-  append(str: string) {
-    if (str == "") return
-    if (this.firstInLine) this.sb.append(this.indentation)
-    this.firstInLine = false
-    this.sb.append(str)
-  }
-
-  appendLine(str: string) {
-    if (str != "") {
-      this.sb.appendLine(this.indentation + str)
-    } else {
-      this.sb.appendLine(str)
-    }
-    this.firstInLine = true
-  }
 } 
 
 export function emptyEnvForTests(additionalTypes: TypeInfos = {}): GenEnv {
-  return new GenEnv("test", {}, mergeTypeInfos(baseTypes, additionalTypes), new StringBuilder())
+  return new GenEnv("test", {}, mergeTypeInfos(baseTypes, additionalTypes))
 }
