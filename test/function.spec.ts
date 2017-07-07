@@ -19,12 +19,12 @@ describe('should add function definition', () => {
 
     it('should handle optional bool return type', () => {
       const item: FunctionType = { type: "Function", params: [], returns: { type: "bool", optional: true } }
-      functionDef(env, item).should.equal("() => boolean | null | undefined")
+      functionDef(env, item).should.equal("() => boolean | null | void")
     })
 
     it('should handle optional function return type', () => {
       const item: FunctionType = { type: "Function", params: [], returns: { type: "union", optional: true, typeParams: [{ type: "string" }, { type: "Function", params: [] }] } }
-      functionDef(env, item).should.equal("() => string | (() => void) | null | undefined")
+      functionDef(env, item).should.equal("() => string | (() => void) | null | void")
     })
 
     it('Object', () => {

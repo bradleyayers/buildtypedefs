@@ -40,10 +40,11 @@ export function unionWith(t: Type, ...ts: Type[]): Type {
 
 export const undefinedType: Type = { type: "undefined" };
 export const nullType: Type = { type: "null" };
+export const voidType: Type = { type: "void" };
 
 export function functionReturnDef(env: GenEnv, type: types.ReturnType | undefined): string {
   if (type) {
-    return typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type)
+    return typeDef(env, type.optional ? unionWith(type, nullType, voidType) : type)
   }
   return "void"
 }
