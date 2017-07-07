@@ -15,6 +15,7 @@ export const baseTypes: TypeInfos = {
   this: {},
   null: {},
   undefined: {},
+  void: {},
   T: {} // TODO: handle type parameters dynamically!
 }
 
@@ -90,7 +91,7 @@ export class GenEnv {
     }
     return rawName
   }
-} 
+}
 
 export function emptyEnvForTests(additionalTypes: TypeInfos = {}): GenEnv {
   return new GenEnv("test", {}, mergeTypeInfos(baseTypes, additionalTypes))
