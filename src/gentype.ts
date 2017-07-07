@@ -49,11 +49,11 @@ export function functionReturnDef(env: GenEnv, type: types.ReturnType | undefine
   return "void"
 }
 
-export function functionDef(env: GenEnv, item: FunctionType): string {
+function functionDef(env: GenEnv, item: FunctionType): string {
   return functionParamsDef(env, item.params || []) + " => " + functionReturnDef(env, item.returns);
 }
 
-export function objectDef(env: GenEnv, item: ObjectType): string {
+function objectDef(env: GenEnv, item: ObjectType): string {
   const propStrs = Object.keys(item.properties).map((name) => {
     const prop = item.properties[name]
     if (prop.optional) {

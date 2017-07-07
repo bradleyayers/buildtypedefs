@@ -39,12 +39,12 @@ function miscDefBody(
       return name + ";"
     }
   } else {
-    return "let " + name + 
+    return "let " + name +
       (type.type ? ": " + typeDef(env, type.optional ? unionWith(type, nullType, undefinedType) : type) : "")
   }
 }
 
-export function miscDef(
+function miscDef(
   env: GenEnv,
   type: OtherDeclaration & { optional?: boolean },
   name: string,
@@ -58,7 +58,7 @@ export function miscDef(
 
 }
 
-export function classDef(
+function classDef(
   env: GenEnv,
   decl: ClassOrInterfaceDeclaration,
   name: string,
@@ -86,7 +86,7 @@ export function classDef(
   )
 }
 
-export function itemDef(env: GenEnv, decl: Declaration, name: string, exportDecl: boolean = false): string[] {
+export function declarationDef(env: GenEnv, decl: Declaration, name: string, exportDecl: boolean = false): string[] {
   if (isClassOrInterfaceDeclaration(decl)) {
     const customCode: string | undefined = env.customCodeFor(name)
     if (typeof customCode == 'string') {

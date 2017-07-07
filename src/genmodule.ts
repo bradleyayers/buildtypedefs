@@ -1,6 +1,6 @@
 import {isClassOrInterfaceDeclaration, ModuleContents} from "./types"
 import {GenEnv, Imports, TypeInfos, baseTypes, mergeTypeInfos} from "./env"
-import {itemDef} from "./gendeclaration";
+import {declarationDef} from "./gendeclaration";
 
 export default function (module: ModuleContents, name: string, typeInfos: TypeInfos): string[] {
 
@@ -13,7 +13,7 @@ export default function (module: ModuleContents, name: string, typeInfos: TypeIn
   const decls: string[] = ([] as string[]).concat(
     ...Object.keys(items).map((item, index) => {
       const decl = items[item];
-      const lines = itemDef(env, decl, item, true)
+      const lines = declarationDef(env, decl, item, true)
       if (!isClassOrInterfaceDeclaration(decl)) {
         lines[lines.length-1] += ";"
       }

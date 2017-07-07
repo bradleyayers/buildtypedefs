@@ -1,6 +1,5 @@
 import moduleDef from "../src/genmodule";
 
-
 describe('when adding module definition', () => {
 
   it('should create an empty module', () => {
