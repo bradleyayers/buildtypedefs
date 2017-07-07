@@ -6,7 +6,7 @@ const env = emptyEnvForTests();
 
 describe('declarations', () => {
 
-  describe('classes', () => {
+  describe('classes and interfaces', () => {
 
     it('should add class definition', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class" };
@@ -104,6 +104,22 @@ describe('declarations', () => {
         "  static prop2(state: EditorState): any",
         "}"
       ])
+    });
+
+    it('should extend classes', () => {
+      const decl: ClassOrInterfaceDeclaration = { type: "class", extends: { type: "Bar" }, properties: {} };
+      declarationDef(env, decl, "Foo").should.deep.equal([
+        "class Foo extends Bar {",
+        "}"
+      ]);
+    });
+
+    it('should extend interfaces', () => {
+      const decl: ClassOrInterfaceDeclaration = { type: "interface", extends: { type: "Bar" }, properties: {} };
+      declarationDef(env, decl, "Foo").should.deep.equal([
+        "interface Foo extends Bar {",
+        "}"
+      ]);
     });
 
     it('should add class definition with JSDoc comments', () => {

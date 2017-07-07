@@ -58,7 +58,7 @@ function miscDef(
 
 }
 
-function classDef(
+function classOrInterfaceDef(
   env: GenEnv,
   decl: ClassOrInterfaceDeclaration,
   name: string,
@@ -92,7 +92,7 @@ export function declarationDef(env: GenEnv, decl: Declaration, name: string, exp
     if (typeof customCode == 'string') {
       return customCode.split("\n")
     }
-    return classDef(env, decl, env.resolveTypeName(name), exportDecl)
+    return classOrInterfaceDef(env, decl, env.resolveTypeName(name), exportDecl)
   }
   return miscDef(env, decl, name, { isInlineProp: false, prefix: exportDecl ? "export " : "" })
 }
