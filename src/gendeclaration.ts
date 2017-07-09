@@ -62,11 +62,13 @@ function classOrInterfaceDef(
   env: GenEnv,
   decl: ClassOrInterfaceDeclaration,
   name: string,
+  exportName: string | null = null,
   exportDecl: boolean = false
 ): string[] {
+  const exportRenamed = typeof exportName == 'string' && exportName != name;
   const typeParams = decl.typeParams ? "<" + decl.typeParams.map((typeParam) => typeDef(env, typeParam)).join(", ") + ">" : ""
-  const extendsClause = decl.extends ? " extends " + typeDef(env, decl.extends) : ""
-  const header = decl.type + " " + name + typeParams + extendsClause
+  const extendsClause = decl.extends ? ` extends ${typeDef(env, decl.extends)}` : ""
+  const header = "declare " + decl.type + " " + name + typeParams + extendsClause
 
   const properties = decl.properties || {}
   const staticProperties = decl.staticProperties || {}
@@ -80,9 +82,10 @@ function classOrInterfaceDef(
 
   return ([] as string[]).concat(
     jsDocComment(env, decl.description),
-    [(exportDecl ? "export " : "") + header + " {"],
+    [`${exportDecl && !exportRenamed ? "export " : ""}${header} {`],
     decls.map((s) => "  " + s),
-    ["}"]
+    ["}"],
+    exportDecl && exportRenamed ? [`export { ${name} as ${exportName} }`] : []
   )
 }
 
@@ -92,7 +95,7 @@ export function declarationDef(env: GenEnv, decl: Declaration, name: string, exp
     if (typeof customCode == 'string') {
       return customCode.split("\n")
     }
-    return classOrInterfaceDef(env, decl, env.resolveTypeName(name), exportDecl)
+    return classOrInterfaceDef(env, decl, env.resolveTypeName(name), name, exportDecl)
   }
   return miscDef(env, decl, name, { isInlineProp: false, prefix: exportDecl ? "export " : "" })
 }

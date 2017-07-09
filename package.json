@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/bradleyayers/getdocs2ts#readme",
   "dependencies": {
-    "builddocs": "^0.1.3",
+    "getdocs": "^0.6.0",
     "mkdirp": "0.5.1"
   },
   "files": [

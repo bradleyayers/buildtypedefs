@@ -21,8 +21,15 @@ export default function (module: ModuleContents, name: string, typeInfos: TypeIn
     })
   )
 
+  function importClause(rawName: string) {
+    const typeInfo = typeInfos[rawName]
+    if (!typeInfo) return rawName
+    if (typeInfo.replaceBy) return `${rawName} as ${typeInfo.replaceBy}`
+    return rawName
+  }
+
   const importDecls = Object.keys(imports).sort().map((moduleName) =>
-    "import { " + imports[moduleName].sort().join(', ') + " } from '" + moduleName + "';"
+    `import { ${imports[moduleName].sort().map(importClause).join(', ')} } from '${moduleName}';`
   )
 
   return ([] as string[]).concat(

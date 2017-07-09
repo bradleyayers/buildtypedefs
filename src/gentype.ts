@@ -104,6 +104,9 @@ export function typeDef(env: GenEnv, item: Type, addParens: boolean = false): st
     return "{ [name: string]: " + typeDef(env, valueType) + " }"
   } else if (item.type == "constructor" && item.typeParams && item.typeParams.length == 1) {
     return "{ new(...args: any[]): " + typeDef(env, item.typeParams[0]) + " }"
+  } else if (/^\"[^\"]*\"$/.test(item.type)) {
+    // string singleton type
+    return item.type
   } else {
     return otherDef(env, item)
   }

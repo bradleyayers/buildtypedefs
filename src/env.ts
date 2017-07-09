@@ -20,19 +20,17 @@ export const baseTypes: TypeInfos = {
 }
 
 function mergeTypeInfo(a: TypeInfo, b: TypeInfo, typeName: string) {
-  function checkConflict(x: string | undefined, y: string | undefined, name: string) {
+  function checkConflict(x: string | undefined, y: string | undefined, name: string): string | undefined {
     if (typeof x == 'string' && typeof y == 'string' && x != y) {
       throw new Error("conflicting '" + name + "' information for type '" + typeName + "'!")
     }
+    return typeof x == 'string' ? x : y
   }
-  checkConflict(a.replaceBy, b.replaceBy, 'replaceBy')
-  checkConflict(a.definedIn, b.definedIn, 'definedIn')
-  checkConflict(a.code, b.code, 'code')
 
   return {
-    replaceBy: a.replaceBy || b.replaceBy,
-    definedIn: a.definedIn || b.definedIn,
-    code: a.code || b.code
+    replaceBy: checkConflict(a.replaceBy, b.replaceBy, 'replaceBy'),
+    definedIn: checkConflict(a.definedIn, b.definedIn, 'definedIn'),
+    code: checkConflict(a.code, b.code, 'code')
   }
 }
 
@@ -73,14 +71,11 @@ export class GenEnv {
 
   resolveTypeName(rawName: string): string {
     const typeInfo = this.typeInfos[rawName]
-    if (/^\"[^\"]*\"$/.test(rawName)) {
-      return rawName
-    }
     if (typeInfo) {
       const name = typeof typeInfo.replaceBy == 'string' ? typeInfo.replaceBy : rawName
       if (typeof typeInfo.definedIn == 'string' && typeInfo.definedIn != this.currModuleName) {
         const importsFromModule = this.imports[typeInfo.definedIn] || []
-        if (importsFromModule.indexOf(name) == -1) importsFromModule.push(name)
+        if (importsFromModule.indexOf(rawName) == -1) importsFromModule.push(rawName)
         this.imports[typeInfo.definedIn] = importsFromModule
       }
       return name
