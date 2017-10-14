@@ -22,6 +22,16 @@ describe('types', () => {
       typeDef(env, type).should.equal("boolean")
     });
 
+    it('should handle the true singleton type', () => {
+      const type = { type: "true" };
+      typeDef(env, type).should.equal("true")
+    });
+
+    it('should handle the false singleton type', () => {
+      const type = { type: "false" };
+      typeDef(env, type).should.equal("false")
+    });
+
     it('should handle string singleton types', () => {
       const type = { type: '"foo"' };
       typeDef(env, type).should.equal('"foo"')

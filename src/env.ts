@@ -5,6 +5,8 @@ export type TypeInfos = { [typeName: string]: TypeInfo }
 
 export const baseTypes: TypeInfos = {
   bool: { replaceBy: 'boolean' },
+  true: {},
+  false: {},
   string: {},
   number: {},
   any: {},
