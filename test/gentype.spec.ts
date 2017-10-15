@@ -87,7 +87,7 @@ describe('types', () => {
 
     it('should handle an array of unions', () => {
       const type = { type: "Array", typeParams: [{ type: "union", typeParams: [{ type: "number" }, { type: "bool" }] }] };
-      typeDef(env, type).should.equal("(number | boolean)[]")
+      typeDef(env, type).should.equal("Array<number | boolean>")
     });
 
   });
@@ -156,7 +156,7 @@ describe('types', () => {
 
     it('array with function parameter', () => {
       const type = mkFunction({ type: "Array", name: "param1", typeParams: [{type: "Function", params: []}] })
-      typeDef(env, type).should.equal("(param1: (() => void)[]) => void")
+      typeDef(env, type).should.equal("(param1: Array<() => void>) => void")
     });
 
     it('function parameter', () => {

@@ -1,5 +1,5 @@
 import {GenEnv} from "./env"
-import {Type, FunctionType, ObjectType, Parameter, OtherType} from "./types";
+import {Type, FunctionType, ArrayType, ObjectType, Parameter, OtherType, isOther} from "./types";
 import * as types from "./types";
 
 export function functionParamsDef(env: GenEnv, params: Parameter[]): string {
@@ -53,6 +53,19 @@ function functionDef(env: GenEnv, item: FunctionType): string {
   return functionParamsDef(env, item.params || []) + " => " + functionReturnDef(env, item.returns);
 }
 
+function isSimpleType(type: Type): boolean {
+  return isOther(type) && (!type.typeParams || type.typeParams.length == 0);
+}
+
+function arrayDef(env: GenEnv, item: ArrayType): string {
+  const elemType = item.typeParams[0];
+  if (isSimpleType(elemType)) {
+    return `${typeDef(env, elemType, true)}[]`;
+  } else {
+    return `Array<${typeDef(env, elemType)}>`;
+  }
+}
+
 function objectDef(env: GenEnv, item: ObjectType): string {
   const propStrs = Object.keys(item.properties).map((name) => {
     const prop = item.properties[name]
@@ -93,8 +106,7 @@ export function typeDef(env: GenEnv, item: Type, addParens: boolean = false): st
   if (types.isFunction(item)) {
     return parenthesize(addParens, functionDef(env, item))
   } else if (types.isArray(item)) {
-    const elemType = item.typeParams[0];
-    return typeDef(env, elemType, true) + "[]";
+    return arrayDef(env, item);
   } else if (types.isObject(item)) {
     return objectDef(env, item)
   } else if (item.type == "union") {
