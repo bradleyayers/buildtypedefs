@@ -28,7 +28,7 @@ describe('declarations', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", constructor: { type: "Function", id: "Foo.constructor"} };
       declarationDef(env, item, "Foo").should.deep.equal([
         "declare class Foo {",
-        "  constructor()",
+        "  constructor();",
         "}"
       ])
     });
@@ -64,7 +64,7 @@ describe('declarations', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", properties: { prop1: { type: "Function", returns: { type: "any"}, params: [{name: "state", type: "EditorState"}] } } };
       declarationDef(env, item, "Foo").should.deep.equal([
         "declare class Foo {",
-        "  prop1(state: EditorState): any",
+        "  prop1(state: EditorState): any;",
         "}"
       ])
     });
@@ -91,7 +91,7 @@ describe('declarations', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", staticProperties: { prop1: { type: "Function", returns: { type: "any" }, params: [{ name: "state", type: "EditorState" }] } } };
       declarationDef(env, item, "Foo").should.deep.equal([
         "declare class Foo {",
-        "  static prop1(state: EditorState): any",
+        "  static prop1(state: EditorState): any;",
         "}"
       ])
     });
@@ -101,7 +101,7 @@ describe('declarations', () => {
       declarationDef(env, item, "Foo").should.deep.equal([
         "declare class Foo {",
         "  prop1: number;",
-        "  static prop2(state: EditorState): any",
+        "  static prop2(state: EditorState): any;",
         "}"
       ])
     });
@@ -152,21 +152,21 @@ describe('declarations', () => {
     it('should create a constructor', () => {
       const decl = {id: "Plugin.constructor", name: "Plugin", type: "Function"};
       declarationDef(env, decl, "item1").should.deep.equal([
-        'constructor()'
+        'constructor();'
       ])
     });
 
     it('should create a constructor with one parameter', () => {
       const decl = { id: "Plugin.constructor", name: "Plugin", type: "Function", params: [{name: "spec", type: "PluginSpec"}] };
       declarationDef(env, decl, "item1").should.deep.equal([
-        'constructor(spec: PluginSpec)'
+        'constructor(spec: PluginSpec);'
       ])
     });
 
     it('should create a constructor with two parameter', () => {
       const decl = { id: "Plugin.constructor", name: "Plugin", type: "Function", params: [{ name: "spec", type: "PluginSpec" }, { name: "spec2", type: "number" }] };
       declarationDef(env, decl, "item1").should.deep.equal([
-        'constructor(spec: PluginSpec, spec2: number)'
+        'constructor(spec: PluginSpec, spec2: number);'
       ])
     });
 

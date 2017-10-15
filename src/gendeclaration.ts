@@ -24,9 +24,11 @@ function miscDefBody(
   if (isFunction(type) && !type.optional) {
     const isConstructor = typeof type.id == "string" && /\.constructor$/.test(type.id);
     if (isConstructor) {
-      return "constructor" + functionParamsDef(env, type.params || [])
+      return "constructor" + functionParamsDef(env, type.params || []) + ";"
+    } else if (options.isInlineProp) {
+      return `${name}${functionDeclarationDef(env, type)};`
     } else {
-      return (options.isInlineProp ? "" : "function ") + name + functionDeclarationDef(env, type)
+      return `function ${name}${functionDeclarationDef(env, type)}`
     }
   } else if (options.isInlineProp) {
     if (type.type) {
