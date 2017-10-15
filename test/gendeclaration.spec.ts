@@ -11,7 +11,7 @@ describe('declarations', () => {
     it('should add class definition', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class" };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare class Foo {",
+        "class Foo {",
         "}"
       ])
     });
@@ -19,7 +19,7 @@ describe('declarations', () => {
     it('should add class definition with generics', () => {
       const item: ClassOrInterfaceDeclaration= { type: "class", typeParams: [{ type: "Foo" }, { type: "Bar" }]};
       declarationDef(env, item, "Class1").should.deep.equal([
-        "declare class Class1<Foo, Bar> {",
+        "class Class1<Foo, Bar> {",
         "}"
       ])
     });
@@ -27,7 +27,7 @@ describe('declarations', () => {
     it('should not use return type for a constructor', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", constructor: { type: "Function", id: "Foo.constructor"} };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare class Foo {",
+        "class Foo {",
         "  constructor();",
         "}"
       ])
@@ -36,7 +36,7 @@ describe('declarations', () => {
     it('should add class definition with one let property', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", properties: { prop1: { type: "number" } } };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare class Foo {",
+        "class Foo {",
         "  prop1: number;",
         "}"
       ])
@@ -45,7 +45,7 @@ describe('declarations', () => {
     it('should add class definition with one optional let property', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", properties: { prop1: { type: "number", optional: true } } };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare class Foo {",
+        "class Foo {",
         "  prop1?: number | null;",
         "}"
       ])
@@ -54,7 +54,7 @@ describe('declarations', () => {
     it('should add class definition with one union property', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", properties: { prop2: { type: "union", typeParams: [{type: "Node"}, {type: "Node2"}] } } };
       declarationDef(env, item, "Class1").should.deep.equal([
-        "declare class Class1 {",
+        "class Class1 {",
         "  prop2: Node | Node2;",
         "}"
       ])
@@ -63,7 +63,7 @@ describe('declarations', () => {
     it('should add class definition with one function property', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", properties: { prop1: { type: "Function", returns: { type: "any"}, params: [{name: "state", type: "EditorState"}] } } };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare class Foo {",
+        "class Foo {",
         "  prop1(state: EditorState): any;",
         "}"
       ])
@@ -72,7 +72,7 @@ describe('declarations', () => {
     it('should add interface definition with one optional function property', () => {
       const item: ClassOrInterfaceDeclaration = { type: "interface", properties: { prop1: { type: "Function", optional: true, returns: { type: "any"}, params: [{name: "state", type: "EditorState"}] } } };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare interface Foo {",
+        "interface Foo {",
         "  prop1?: ((state: EditorState) => any) | null;",
         "}"
       ])
@@ -81,7 +81,7 @@ describe('declarations', () => {
     it('should add class definition with one static let property', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", staticProperties: { prop1: { type: "number" } } };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare class Foo {",
+        "class Foo {",
         "  static prop1: number;",
         "}"
       ])
@@ -90,7 +90,7 @@ describe('declarations', () => {
     it('should add class definition with one static function property', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", staticProperties: { prop1: { type: "Function", returns: { type: "any" }, params: [{ name: "state", type: "EditorState" }] } } };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare class Foo {",
+        "class Foo {",
         "  static prop1(state: EditorState): any;",
         "}"
       ])
@@ -99,7 +99,7 @@ describe('declarations', () => {
     it('should add class definition with two properties', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", properties: { prop1: { type: "number" } }, staticProperties: { prop2: { type: "Function", returns: { type: "any" }, params: [{ name: "state", type: "EditorState" }] } } };
       declarationDef(env, item, "Foo").should.deep.equal([
-        "declare class Foo {",
+        "class Foo {",
         "  prop1: number;",
         "  static prop2(state: EditorState): any;",
         "}"
@@ -109,7 +109,7 @@ describe('declarations', () => {
     it('should extend classes', () => {
       const decl: ClassOrInterfaceDeclaration = { type: "class", extends: { type: "Bar" }, properties: {} };
       declarationDef(env, decl, "Foo").should.deep.equal([
-        "declare class Foo extends Bar {",
+        "class Foo extends Bar {",
         "}"
       ]);
     });
@@ -117,7 +117,7 @@ describe('declarations', () => {
     it('should create a interface', () => {
       const decl = { type: "interface" };
       declarationDef(env, decl, "Plugin").should.deep.equal([
-        'declare interface Plugin {',
+        'interface Plugin {',
         "}"
       ])
     });
@@ -125,7 +125,7 @@ describe('declarations', () => {
     it('should extend interfaces', () => {
       const decl: ClassOrInterfaceDeclaration = { type: "interface", extends: { type: "Bar" }, properties: {} };
       declarationDef(env, decl, "Foo").should.deep.equal([
-        "declare interface Foo extends Bar {",
+        "interface Foo extends Bar {",
         "}"
       ]);
     });
@@ -136,7 +136,7 @@ describe('declarations', () => {
         "/**",
         " * Lorem ipsum",
         " */",
-        "declare class Foo {",
+        "class Foo {",
         "  /**",
         "   * number of props given",
         "   */",

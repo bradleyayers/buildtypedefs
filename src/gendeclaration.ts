@@ -70,7 +70,7 @@ function classOrInterfaceDef(
   const exportRenamed = typeof exportName == 'string' && exportName != name;
   const typeParams = decl.typeParams ? "<" + decl.typeParams.map((typeParam) => typeDef(env, typeParam)).join(", ") + ">" : ""
   const extendsClause = decl.extends ? ` extends ${typeDef(env, decl.extends)}` : ""
-  const header = "declare " + decl.type + " " + name + typeParams + extendsClause
+  const header = decl.type + " " + name + typeParams + extendsClause
 
   const properties = decl.properties || {}
   const staticProperties = decl.staticProperties || {}

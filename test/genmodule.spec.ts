@@ -10,7 +10,7 @@ describe('when adding module definition', () => {
   it('should create an module with one item', () => {
     const module = { items: {Class1: { type: "class"}} };
     moduleDef(module, "module1", {}).should.deep.equal([
-      "export declare class Class1 {",
+      "export class Class1 {",
       "}"
     ])
   });
@@ -21,7 +21,7 @@ describe('when adding module definition', () => {
     moduleDef(module, "module1", additionalTypes).should.deep.equal([
       "import { EditorProps } from 'prosemirror-view';",
       "",
-      "export declare class SpecialEditorProps extends EditorProps {",
+      "export class SpecialEditorProps extends EditorProps {",
       "}"
     ])
   })
@@ -42,7 +42,7 @@ describe('when adding module definition', () => {
     moduleDef(module, "module1", additionalTypes).should.deep.equal([
       "import { Node as ProsemirrorNode } from 'prosemirror-model';",
       "",
-      "export declare class RedNode extends ProsemirrorNode {",
+      "export class RedNode extends ProsemirrorNode {",
       "}"
     ])
   });
@@ -51,7 +51,7 @@ describe('when adding module definition', () => {
     const module = { items: { Node: { type: "class" }} };
     const additionalTypes = { "Node": { replaceBy: "ProsemirrorNode" }};
     moduleDef(module, "module1", additionalTypes).should.deep.equal([
-      "declare class ProsemirrorNode {",
+      "class ProsemirrorNode {",
       "}",
       "export { ProsemirrorNode as Node }"
     ])
