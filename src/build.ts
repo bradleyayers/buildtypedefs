@@ -57,6 +57,7 @@ export default function (
   for (let module of modules) {
     const mod = moduleContents[module.name]
     let sb = moduleDef(mod, module.name, typeInfos);
+    sb.push('') // end file with a newline
     mkdirpIfNotExists(path.dirname(module.outFile))
     fs.writeFileSync(module.outFile, (module.header || '') + sb.join("\n"));
   }
