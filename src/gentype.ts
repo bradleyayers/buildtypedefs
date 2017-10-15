@@ -1,5 +1,5 @@
 import {GenEnv} from "./env"
-import {Type, FunctionType, ArrayType, ObjectType, Parameter, OtherType, isOther} from "./types";
+import {Type, FunctionType, ArrayType, ObjectType, Parameter, OtherType, isArray, isOther} from "./types";
 import * as types from "./types";
 
 export function functionParamsDef(env: GenEnv, params: Parameter[]): string {
@@ -54,6 +54,7 @@ function functionDef(env: GenEnv, item: FunctionType): string {
 }
 
 function isSimpleType(type: Type): boolean {
+  if (isArray(type)) { return isSimpleType(type.typeParams[0]); }
   return isOther(type) && (!type.typeParams || type.typeParams.length == 0);
 }
 

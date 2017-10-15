@@ -85,6 +85,11 @@ describe('types', () => {
       typeDef(env, type).should.equal("string[]")
     });
 
+    it('should handle two-dimensional arrays', () => {
+      const type = { type: "Array", typeParams: [{ type: "Array", typeParams: [{ type: "string" }] }] };
+      typeDef(env, type).should.equal("string[][]")
+    });
+
     it('should handle an array of unions', () => {
       const type = { type: "Array", typeParams: [{ type: "union", typeParams: [{ type: "number" }, { type: "bool" }] }] };
       typeDef(env, type).should.equal("Array<number | boolean>")
