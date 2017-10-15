@@ -114,6 +114,30 @@ describe('declarations', () => {
       ]);
     });
 
+    it('should extend classes by interfaces, copying its methods', () => {
+      const declarationOfBar: ClassOrInterfaceDeclaration = {
+        type: "interface",
+        properties: {
+          isEmpty: { type: "Function", params: [], returns: { type: "bool" } },
+          prettyPrint: { type: "Function", params: [], returns: { type: "string" } }
+        }
+      }
+      const myEnv = emptyEnvForTests({ "Bar": { declaration: declarationOfBar } });
+      const decl: ClassOrInterfaceDeclaration = {
+        type: "class",
+        extends: { type: "Bar" },
+        properties: {
+          prettyPrint: { type: "Function", params: [{ name: "ppOpts", type: "PPOptions", optional: true }], returns: { type: "string" } }
+        }
+      };
+      declarationDef(myEnv, decl, "Foo").should.deep.equal([
+        "class Foo implements Bar {",
+        "  prettyPrint(ppOpts?: PPOptions): string;",
+        "  isEmpty(): boolean;",
+        "}"
+      ]);
+    });
+
     it('should create a interface', () => {
       const decl = { type: "interface" };
       declarationDef(env, decl, "Plugin").should.deep.equal([

@@ -1,5 +1,5 @@
 import {GenEnv} from "./env"
-import {FunctionType, isFunction, Declaration, ClassOrInterfaceDeclaration, OtherDeclaration, isClassOrInterfaceDeclaration} from "./types";
+import {FunctionType, isFunction, isOther, Declaration, ClassOrInterfaceDeclaration, OtherDeclaration, isClassOrInterfaceDeclaration} from "./types";
 import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType, undefinedType } from "./gentype";
 
 function functionDeclarationDef(env: GenEnv, item: FunctionType): string {
@@ -68,8 +68,26 @@ function classOrInterfaceDef(
   exportDecl: boolean = false
 ): string[] {
   const exportRenamed = typeof exportName == 'string' && exportName != name;
+
+  let extendsClause = "";
+  if (decl.extends) {
+    const extendedDeclaration = isOther(decl.extends) && env.getDeclaration(decl.extends.type)
+    if (extendedDeclaration && decl.type == "class" && extendedDeclaration.type == "interface") {
+      extendsClause = ` implements ${typeDef(env, decl.extends)}`
+      const extendedProps = extendedDeclaration.properties || {}
+      // copy declarations of all non-overwritten properties
+      for (const propName in extendedProps) {
+        decl.properties = decl.properties || {}
+        if (!decl.properties[propName]) {
+          decl.properties[propName] = extendedProps[propName]
+        }
+      }
+    } else {
+      extendsClause = ` extends ${typeDef(env, decl.extends)}`
+    }
+  }
+
   const typeParams = decl.typeParams ? "<" + decl.typeParams.map((typeParam) => typeDef(env, typeParam)).join(", ") + ">" : ""
-  const extendsClause = decl.extends ? ` extends ${typeDef(env, decl.extends)}` : ""
   const header = decl.type + " " + name + typeParams + extendsClause
 
   const properties = decl.properties || {}

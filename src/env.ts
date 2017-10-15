@@ -1,8 +1,11 @@
+import { ClassOrInterfaceDeclaration } from "./types"
+
 export type Imports = { [moduleName: string]: { names: string[], wholeModuleAs?: string } }
 
 export type TypeInfo = {
   replaceBy?: string,
   sourceModule?: { name: string, isWholeModule?: boolean },
+  declaration?: ClassOrInterfaceDeclaration,
   code?: string
 }
 export type TypeInfos = { [typeName: string]: TypeInfo }
@@ -76,6 +79,11 @@ export class GenEnv {
   customCodeFor(rawName: string): string | undefined {
     const typeInfo = this.typeInfos[rawName]
     return typeInfo && typeInfo.code
+  }
+
+  getDeclaration(rawName: string): undefined | ClassOrInterfaceDeclaration {
+    const typeInfo = this.typeInfos[rawName]
+    return typeInfo && typeInfo.declaration
   }
 
   resolveTypeName(rawName: string): string {
