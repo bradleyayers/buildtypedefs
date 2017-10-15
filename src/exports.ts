@@ -17,7 +17,7 @@ export function exportedTypeInfos(moduleName: string, moduleContents: ModuleCont
   const typeInfos: TypeInfos = {}
   const types = exportedTypes(moduleContents)
   for (let type of types) {
-    typeInfos[type] = { definedIn: moduleName }
+    typeInfos[type] = { sourceModule: { name: moduleName } }
   }
   return typeInfos
 }

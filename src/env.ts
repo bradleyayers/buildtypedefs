@@ -1,6 +1,10 @@
-export type Imports = { [moduleName: string]: string[] }
+export type Imports = { [moduleName: string]: { names: string[], wholeModuleAs?: string } }
 
-export type TypeInfo = { replaceBy?: string, definedIn?: string, code?: string }
+export type TypeInfo = {
+  replaceBy?: string,
+  sourceModule?: { name: string, isWholeModule?: boolean },
+  code?: string
+}
 export type TypeInfos = { [typeName: string]: TypeInfo }
 
 export const baseTypes: TypeInfos = {
@@ -22,17 +26,20 @@ export const baseTypes: TypeInfos = {
 }
 
 function mergeTypeInfo(a: TypeInfo, b: TypeInfo, typeName: string) {
-  function checkConflict(x: string | undefined, y: string | undefined, name: string): string | undefined {
-    if (typeof x == 'string' && typeof y == 'string' && x != y) {
+  function checkConflict<A>(x: A | undefined, y: A | undefined, isEq: (x: A, y: A) => boolean, name: string): A | undefined {
+    if (x != undefined && y != undefined && !isEq(x, y)) {
       throw new Error("conflicting '" + name + "' information for type '" + typeName + "'!")
     }
-    return typeof x == 'string' ? x : y
+    return (typeof x != undefined) ? x : y
   }
 
+  const stringEq = (x: string, y: string) => x == y;
+  const moduleEq = (x: { name: string, isWholeModule?: boolean }, y: { name: string, isWholeModule?: boolean }) => x.name == y.name && !!x.isWholeModule == !!y.isWholeModule;
+
   return {
-    replaceBy: checkConflict(a.replaceBy, b.replaceBy, 'replaceBy'),
-    definedIn: checkConflict(a.definedIn, b.definedIn, 'definedIn'),
-    code: checkConflict(a.code, b.code, 'code')
+    replaceBy: checkConflict(a.replaceBy, b.replaceBy, stringEq, 'replaceBy'),
+    definedIn: checkConflict(a.sourceModule, b.sourceModule, moduleEq, 'definedIn'),
+    code: checkConflict(a.code, b.code, stringEq, 'code')
   }
 }
 
@@ -75,10 +82,14 @@ export class GenEnv {
     const typeInfo = this.typeInfos[rawName]
     if (typeInfo) {
       const name = typeof typeInfo.replaceBy == 'string' ? typeInfo.replaceBy : rawName
-      if (typeof typeInfo.definedIn == 'string' && typeInfo.definedIn != this.currModuleName) {
-        const importsFromModule = this.imports[typeInfo.definedIn] || []
-        if (importsFromModule.indexOf(rawName) == -1) importsFromModule.push(rawName)
-        this.imports[typeInfo.definedIn] = importsFromModule
+      if (typeof typeInfo.sourceModule == 'object' && typeInfo.sourceModule.name != this.currModuleName) {
+        const importsFromModule = this.imports[typeInfo.sourceModule.name] || { names: [] }
+        if (typeInfo.sourceModule.isWholeModule) {
+          importsFromModule.wholeModuleAs = name
+        } else if (importsFromModule.names.indexOf(rawName) == -1) {
+          importsFromModule.names.push(rawName)
+        }
+        this.imports[typeInfo.sourceModule.name] = importsFromModule
       }
       return name
     }

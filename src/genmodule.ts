@@ -28,8 +28,18 @@ export default function (module: ModuleContents, name: string, typeInfos: TypeIn
     return rawName
   }
 
-  const importDecls = Object.keys(imports).sort().map((moduleName) =>
-    `import { ${imports[moduleName].sort().map(importClause).join(', ')} } from '${moduleName}';`
+  const importDecls = ([] as string[]).concat(
+    ...Object.keys(imports).sort().map((moduleName) => {
+      const importSpec = imports[moduleName]
+      const importStatements = []
+      if (typeof importSpec.wholeModuleAs == 'string') {
+        importStatements.push(`import ${importSpec.wholeModuleAs} = require('${moduleName}');`)
+      }
+      if (importSpec.names.length > 0) {
+        importStatements.push(`import { ${importSpec.names.sort().map(importClause).join(', ')} } from '${moduleName}';`)
+      }
+      return importStatements
+    })
   )
 
   return ([] as string[]).concat(

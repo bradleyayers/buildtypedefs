@@ -14,7 +14,7 @@ getdocs2ts([
         name: 'prosemirror-history',
         srcFiles: './prosemirror-history/src/*.js',
         outFile: './types/prosemirror-history/index.d.ts',
-        header: 
+        header:
 `// Type definitions for prosemirror-history 0.21
 // Project: https://github.com/ProseMirror/prosemirror-history
 // Definitions by: Bradley Ayers <https://github.com/bradleyayers>
@@ -25,9 +25,9 @@ getdocs2ts([
 `
     }
 ], {
-    Transaction: { definedIn: 'prosemirror-state' },
-    Plugin: { definedIn: 'prosemirror-state' },
-    EditorState: { definedIn: 'prosemirror-state' },
+    Transaction: { sourceModule: { name: 'prosemirror-state' } },
+    Plugin: { sourceModule: { name: 'prosemirror-state' } },
+    EditorState: { sourceModule: { name: 'prosemirror-state' } }
 })
 ```
 
