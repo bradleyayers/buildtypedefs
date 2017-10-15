@@ -28,12 +28,12 @@ export const baseTypes: TypeInfos = {
   T: {} // TODO: handle type parameters dynamically!
 }
 
-function mergeTypeInfo(a: TypeInfo, b: TypeInfo, typeName: string) {
+function mergeTypeInfo(a: TypeInfo, b: TypeInfo, typeName: string): TypeInfo {
   function checkConflict<A>(x: A | undefined, y: A | undefined, isEq: (x: A, y: A) => boolean, name: string): A | undefined {
-    if (x != undefined && y != undefined && !isEq(x, y)) {
+    if (x !== undefined && y !== undefined && !isEq(x, y)) {
       throw new Error("conflicting '" + name + "' information for type '" + typeName + "'!")
     }
-    return (typeof x != undefined) ? x : y
+    return (x !== undefined) ? x : y
   }
 
   const stringEq = (x: string, y: string) => x == y;
@@ -41,7 +41,7 @@ function mergeTypeInfo(a: TypeInfo, b: TypeInfo, typeName: string) {
 
   return {
     replaceBy: checkConflict(a.replaceBy, b.replaceBy, stringEq, 'replaceBy'),
-    definedIn: checkConflict(a.sourceModule, b.sourceModule, moduleEq, 'definedIn'),
+    sourceModule: checkConflict(a.sourceModule, b.sourceModule, moduleEq, 'sourceModule'),
     code: checkConflict(a.code, b.code, stringEq, 'code')
   }
 }
