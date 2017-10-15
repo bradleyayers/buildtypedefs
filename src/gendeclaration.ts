@@ -73,7 +73,7 @@ function classOrInterfaceDef(
   const properties = decl.properties || {}
   const staticProperties = decl.staticProperties || {}
   const decls = ([] as string[]).concat(
-    ("constructor" in decl && !(decl.constructor instanceof Function))
+    (decl.constructor && !(decl.constructor instanceof Function))
       ? miscDef(env, decl.constructor, name, { isInlineProp: false })
       : [],
     ...Object.keys(properties).map((prop) => miscDef(env, properties[prop], prop, { isInlineProp: true })),

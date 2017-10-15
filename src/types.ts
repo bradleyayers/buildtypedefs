@@ -58,6 +58,7 @@ export interface ClassOrInterfaceDeclaration {
   properties?: { [propName: string]: Property }
   staticProperties?: { [propName: string]: Property }
   description?: string
+  'constructor'?: Function | (FunctionType & { description?: string })
 }
 
 export type OtherDeclaration = Type & { description?: string }
