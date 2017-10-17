@@ -1,5 +1,5 @@
 import {GenEnv} from "./env"
-import {FunctionType, isFunction, isOther, Declaration, ClassOrInterfaceDeclaration, OtherDeclaration, isClassOrInterfaceDeclaration} from "./types";
+import {FunctionType, isFunction, isOther, Declaration, ClassOrInterfaceDeclaration, OtherDeclaration, isClassOrInterfaceDeclaration, Type} from "./types";
 import { typeDef, functionParamsDef, functionReturnDef, unionWith, nullType, undefinedType } from "./gentype";
 
 function functionDeclarationDef(env: GenEnv, item: FunctionType): string {
@@ -13,6 +13,11 @@ function jsDocComment(env: GenEnv, comment?: string): string[] {
     comment.trim().split('\n').map((line) => " " + ("* " + line.trim()).trim()),
     [" */"]
   )
+}
+
+function unionWithNull(type: Type): Type {
+  if (isOther(type) && type.type == 'any') { return type; }
+  return unionWith(type, nullType);
 }
 
 function miscDefBody(
@@ -33,7 +38,7 @@ function miscDefBody(
   } else if (options.isInlineProp) {
     if (type.type) {
       if (type.optional) {
-        return name + "?: " + typeDef(env, unionWith(type, nullType)) + ";"
+        return name + "?: " + typeDef(env, unionWithNull(type)) + ";"
       } else {
         return name + ": " + typeDef(env, type) + ";"
       }

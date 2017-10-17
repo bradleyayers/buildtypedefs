@@ -78,6 +78,15 @@ describe('declarations', () => {
       ])
     });
 
+    it('should add interface definition with one optional property of type any', () => {
+      const item: ClassOrInterfaceDeclaration = { type: "interface", properties: { prop1: { type: "any", optional: true } } };
+      declarationDef(env, item, "Foo").should.deep.equal([
+        "interface Foo {",
+        "  prop1?: any;",
+        "}"
+      ])
+    });
+
     it('should add class definition with one static let property', () => {
       const item: ClassOrInterfaceDeclaration = { type: "class", staticProperties: { prop1: { type: "number" } } };
       declarationDef(env, item, "Foo").should.deep.equal([
