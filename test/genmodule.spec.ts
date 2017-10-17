@@ -51,9 +51,9 @@ describe('when adding module definition', () => {
     const module = { items: { Node: { type: "class" }} };
     const additionalTypes = { "Node": { replaceBy: "ProsemirrorNode" }};
     moduleDef(module, "module1", additionalTypes).should.deep.equal([
-      "class ProsemirrorNode {",
+      "declare class ProsemirrorNode {",
       "}",
-      "export { ProsemirrorNode as Node }"
+      "export { ProsemirrorNode as Node };"
     ])
   });
 

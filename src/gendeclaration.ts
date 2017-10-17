@@ -102,10 +102,10 @@ function classOrInterfaceDef(
 
   return ([] as string[]).concat(
     jsDocComment(env, decl.description),
-    [`${exportDecl && !exportRenamed ? "export " : ""}${header} {`],
+    [`${exportDecl ? (exportRenamed ? "declare" : "export") + " " : ""}${header} {`],
     decls.map((s) => "  " + s),
     ["}"],
-    exportDecl && exportRenamed ? [`export { ${name} as ${exportName} }`] : []
+    exportDecl && exportRenamed ? [`export { ${name} as ${exportName} };`] : []
   )
 }
 
