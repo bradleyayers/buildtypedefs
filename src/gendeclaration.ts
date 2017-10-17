@@ -10,7 +10,7 @@ function jsDocComment(env: GenEnv, comment?: string): string[] {
   if (comment == undefined) return []
   return ([] as string[]).concat(
     ["/**"],
-    comment.trim().split('\n').map((line) => " * " + line.trim()),
+    comment.trim().split('\n').map((line) => " " + ("* " + line.trim()).trim()),
     [" */"]
   )
 }
