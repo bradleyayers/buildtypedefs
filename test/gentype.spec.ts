@@ -201,6 +201,16 @@ describe('types', () => {
       typeDef(env, type).should.equal("{ prop1: string, prop2: { [key: string]: any } }")
     });
 
+    it('should use method syntax for function properties', () => {
+      const type = {
+        type: "Object",
+        properties: {
+          prop1: { type: "Function", params: [{ name: "p", type: "string" }], returns: { type: "bool" } }
+        }
+      };
+      typeDef(env, type).should.equal("{ prop1(p: string): boolean }")
+    })
+
   });
 
   describe('other types (with parameters)', () => {

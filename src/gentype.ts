@@ -1,5 +1,5 @@
 import {GenEnv} from "./env"
-import {Type, FunctionType, ArrayType, ObjectType, Parameter, OtherType, isArray, isOther} from "./types";
+import {Type, FunctionType, ArrayType, ObjectType, Parameter, OtherType, isFunction, isArray, isOther} from "./types";
 import * as types from "./types";
 
 export function functionParamsDef(env: GenEnv, params: Parameter[]): string {
@@ -72,6 +72,8 @@ function objectDef(env: GenEnv, item: ObjectType): string {
     const prop = item.properties[name]
     if (prop.optional) {
       return name + "?: " + typeDef(env, unionWith(prop, nullType))
+    } else if (isFunction(prop)) {
+      return name + functionParamsDef(env, prop.params || []) + ": " + functionReturnDef(env, prop.returns)
     } else {
       return name + ": " + typeDef(env, prop)
     }
