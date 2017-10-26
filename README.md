@@ -44,7 +44,7 @@ getdocs2ts(
         MarkdownIt: { sourceModule: { name: 'markdown-it' } },
         'dom.Document': { replaceBy: 'Document' },
         'dom.DocumentFragment': { replaceBy: 'DocumentFragment' },
-        'dom.Element': { replaceBy: 'Element' },
+        'dom.Element': { replaceBy: 'HTMLElement' },
         'dom.Event': { replaceBy: 'Event' },
         'dom.KeyboardEvent': { replaceBy: 'KeyboardEvent' },
         'dom.MouseEvent': { replaceBy: 'MouseEvent' },
