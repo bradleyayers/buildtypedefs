@@ -1,6 +1,8 @@
 # getdocs2ts
 
-This is a utility that transforms code documented with getdocs-style doc comments into TypeScript definition files
+This is a utility that transforms code documented with [getdocs][]-style doc comments into TypeScript definition files
+
+[getdocs]: https://github.com/marijnh/getdocs
 
 # Usage
 
